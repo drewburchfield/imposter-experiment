@@ -934,6 +934,9 @@
 
                 // Track convergence data
                 const convergenceData = [];
+
+                // For small runs, track every point. For large runs, use sample points
+                const trackEveryPoint = totalSelections <= 100;
                 const samplePoints = [10, 50, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000];
 
                 for (let i = 0; i < totalSelections; i++) {
@@ -941,9 +944,13 @@
                         jenSelected++;
                     }
 
-                    // Store convergence data at sample points
+                    // Store convergence data
                     const currentTrial = i + 1;
-                    if (samplePoints.includes(currentTrial) || currentTrial === totalSelections) {
+                    const shouldTrack = trackEveryPoint ||
+                                       samplePoints.includes(currentTrial) ||
+                                       currentTrial === totalSelections;
+
+                    if (shouldTrack) {
                         const currentPercent = (jenSelected / currentTrial) * 100;
                         convergenceData.push({
                             trial: currentTrial,
