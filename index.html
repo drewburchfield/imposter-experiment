@@ -1031,15 +1031,11 @@
                 document.getElementById(`exp${expNum}-p-selected`).textContent = pSelected.toFixed(4);
                 document.getElementById(`exp${expNum}-p-not-selected`).textContent = pNotSelected.toFixed(4);
 
+                // Always show chart (convergence or simple bar)
                 this.updateChart(expNum, results);
-
-                // Show convergence if we have data
-                if (results.convergenceData && results.convergenceData.length > 1) {
-                    this.updateConvergenceChart(expNum, results);
-                }
             },
 
-            // Update individual chart - Show convergence over time
+            // Update individual chart - Always show convergence
             updateChart(expNum, results) {
                 const ctx = document.getElementById(`exp${expNum}-chart`).getContext('2d');
 
@@ -1047,34 +1043,8 @@
                     this.charts[expNum].destroy();
                 }
 
-                // Use convergence data if available, otherwise show simple bar
-                if (results.convergenceData && results.convergenceData.length > 1) {
-                    this.updateConvergenceChart(expNum, results);
-                } else {
-                    // Fallback: simple bar chart
-                    const notSelected = results.total - results.selected;
-
-                    this.charts[expNum] = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Not Selected', 'Selected'],
-                            datasets: [{
-                                data: [notSelected, results.selected],
-                                backgroundColor: ['#E2E8F0', '#FF6B6B']
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                }
+                // Always show convergence chart
+                this.updateConvergenceChart(expNum, results);
             },
 
             // Update convergence chart - Shows percentage approaching theory over time
