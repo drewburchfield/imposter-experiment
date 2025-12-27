@@ -802,6 +802,60 @@
                 <canvas id="comparison-chart"></canvas>
             </div>
         </div>
+
+        <!-- Full Jen Story Simulation -->
+        <div class="pattern-analysis" id="jen-story-simulation" style="display:none;">
+            <div class="pattern-header">
+                <h2>🎭 Ultimate Validation: Full Jen Story Simulation</h2>
+                <p>Simulate complete 3-round games and count how many match Jen's exact pattern</p>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">
+                    Each simulation runs 3 complete rounds using your experiment configurations,
+                    then checks if the pattern matches: <strong>Selected in Round 1, NOT in Round 2, Selected in Round 3</strong>
+                </p>
+                <div class="preset-buttons" style="justify-content: center;">
+                    <button onclick="app.runJenStorySimulation(100)">100 Games</button>
+                    <button onclick="app.runJenStorySimulation(1000)">1,000 Games</button>
+                    <button onclick="app.runJenStorySimulation(10000)">10,000 Games</button>
+                </div>
+            </div>
+
+            <div class="progress-container" id="jen-story-progress" style="display:none; margin: 20px 0;">
+                <p style="margin-bottom: 10px; font-weight: 500; text-align: center;">
+                    Running <span id="jen-story-total">0</span> complete 3-round games... <span id="jen-story-current">0</span>
+                </p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="jen-story-progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="jen-story-results" style="display:none;">
+                <div class="pattern-formula">
+                    <div class="formula-step">Games matching Jen's pattern: <span id="jen-story-matches" style="color: var(--color-accent);">-</span></div>
+                    <div class="formula-step">Total games simulated: <span id="jen-story-games" style="color: var(--color-accent);">-</span></div>
+                    <div class="formula-result" id="jen-story-percent">Percentage: -</div>
+                </div>
+
+                <div class="pattern-comparison">
+                    <div class="pattern-card">
+                        <div class="pattern-card-label">Full Simulation Result</div>
+                        <div class="pattern-card-value" id="jen-story-sim-percent">-</div>
+                        <div class="pattern-card-subtext" id="jen-story-sim-odds">-</div>
+                    </div>
+                    <div class="pattern-card">
+                        <div class="pattern-card-label">Theoretical (from math)</div>
+                        <div class="pattern-card-value">1.61%</div>
+                        <div class="pattern-card-subtext">(1 in 62)</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px; padding: 15px; background: #F7FAFC; border-radius: 8px;">
+                    <div id="jen-story-verdict" style="font-size: 1.1rem; font-weight: 600;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -860,7 +914,7 @@
                 return selected.includes(0); // Jen is always index 0
             },
 
-            // Run experiment with live updates
+            // Run experiment with live updates and convergence tracking
             async runExperiment(expNum, totalSelections) {
                 const config = this.getExperimentConfig(expNum);
 
@@ -878,9 +932,23 @@
                 let jenSelected = 0;
                 const updateInterval = Math.max(1, Math.floor(totalSelections / 100));
 
+                // Track convergence data
+                const convergenceData = [];
+                const samplePoints = [10, 50, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000];
+
                 for (let i = 0; i < totalSelections; i++) {
                     if (this.runSingleSelection(config.players, config.imposters)) {
                         jenSelected++;
+                    }
+
+                    // Store convergence data at sample points
+                    const currentTrial = i + 1;
+                    if (samplePoints.includes(currentTrial) || currentTrial === totalSelections) {
+                        const currentPercent = (jenSelected / currentTrial) * 100;
+                        convergenceData.push({
+                            trial: currentTrial,
+                            percent: currentPercent
+                        });
                     }
 
                     // Update progress
@@ -898,11 +966,26 @@
                 document.getElementById(`exp${expNum}-progress`).classList.remove('active');
                 document.getElementById(`exp${expNum}-results`).classList.add('active');
 
+                const theoryPercent = this.calculateTheory(config.players, config.imposters) * 100;
+
+                // Calculate expected range (95% confidence interval)
+                const p = config.imposters / config.players;
+                const se = Math.sqrt((p * (1 - p)) / totalSelections);
+                const margin = 1.96 * se * 100; // 95% CI
+                const expectedMin = theoryPercent - margin;
+                const expectedMax = theoryPercent + margin;
+
                 return {
                     total: totalSelections,
                     selected: jenSelected,
                     actualPercent: (jenSelected / totalSelections) * 100,
-                    theoryPercent: this.calculateTheory(config.players, config.imposters) * 100
+                    theoryPercent: theoryPercent,
+                    convergenceData: convergenceData,
+                    expectedRange: {
+                        min: expectedMin,
+                        max: expectedMax,
+                        margin: margin
+                    }
                 };
             },
 
@@ -917,15 +1000,21 @@
                 const diffEl = document.getElementById(`exp${expNum}-diff`);
                 const absDiff = Math.abs(diff);
 
-                if (absDiff < 1) {
+                // Check if within expected range
+                const withinRange = results.actualPercent >= results.expectedRange.min &&
+                                   results.actualPercent <= results.expectedRange.max;
+
+                const rangeText = `Expected range: ${results.expectedRange.min.toFixed(1)}% - ${results.expectedRange.max.toFixed(1)}%`;
+
+                if (withinRange && absDiff < 1) {
                     diffEl.className = 'difference good';
-                    diffEl.textContent = `✓ Difference: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% - Excellent match!`;
-                } else if (absDiff < 3) {
+                    diffEl.textContent = `✓ ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% difference - Excellent! ${rangeText}`;
+                } else if (withinRange) {
                     diffEl.className = 'difference good';
-                    diffEl.textContent = `✓ Difference: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% - Good match!`;
+                    diffEl.textContent = `✓ ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% difference - Within expected range! ${rangeText}`;
                 } else {
                     diffEl.className = 'difference warning';
-                    diffEl.textContent = `⚠ Difference: ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% - Run more trials!`;
+                    diffEl.textContent = `⚠ ${diff >= 0 ? '+' : ''}${diff.toFixed(2)}% difference - Outside expected range (${rangeText}). This is rare but possible - try more trials!`;
                 }
 
                 // Update compound probability contributions
@@ -936,9 +1025,14 @@
                 document.getElementById(`exp${expNum}-p-not-selected`).textContent = pNotSelected.toFixed(4);
 
                 this.updateChart(expNum, results);
+
+                // Show convergence if we have data
+                if (results.convergenceData && results.convergenceData.length > 1) {
+                    this.updateConvergenceChart(expNum, results);
+                }
             },
 
-            // Update individual chart
+            // Update individual chart - Show convergence over time
             updateChart(expNum, results) {
                 const ctx = document.getElementById(`exp${expNum}-chart`).getContext('2d');
 
@@ -946,34 +1040,116 @@
                     this.charts[expNum].destroy();
                 }
 
-                const notSelected = results.total - results.selected;
+                // Use convergence data if available, otherwise show simple bar
+                if (results.convergenceData && results.convergenceData.length > 1) {
+                    this.updateConvergenceChart(expNum, results);
+                } else {
+                    // Fallback: simple bar chart
+                    const notSelected = results.total - results.selected;
+
+                    this.charts[expNum] = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Not Selected', 'Selected'],
+                            datasets: [{
+                                data: [notSelected, results.selected],
+                                backgroundColor: ['#E2E8F0', '#FF6B6B']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            },
+
+            // Update convergence chart - Shows percentage approaching theory over time
+            updateConvergenceChart(expNum, results) {
+                const ctx = document.getElementById(`exp${expNum}-chart`).getContext('2d');
+
+                if (this.charts[expNum]) {
+                    this.charts[expNum].destroy();
+                }
+
+                const labels = results.convergenceData.map(d => d.trial);
+                const percentages = results.convergenceData.map(d => d.percent);
+                const theoryLine = Array(labels.length).fill(results.theoryPercent);
 
                 this.charts[expNum] = new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
-                        labels: ['Not Selected', 'Selected'],
-                        datasets: [{
-                            data: [notSelected, results.selected],
-                            backgroundColor: ['#E2E8F0', '#FF6B6B']
-                        }]
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Actual %',
+                                data: percentages,
+                                borderColor: '#FF6B6B',
+                                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: 'Theory %',
+                                data: theoryLine,
+                                borderColor: '#4ECDC4',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Convergence to Theory',
+                                font: { size: 12 }
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: (context) => {
-                                        const value = context.parsed.y;
-                                        const percent = ((value / results.total) * 100).toFixed(1);
-                                        return `${value} times (${percent}%)`;
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
                                     }
                                 }
                             }
                         },
                         scales: {
-                            y: { beginAtZero: true }
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of Trials',
+                                    font: { size: 11 }
+                                },
+                                ticks: {
+                                    font: { size: 10 }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Selection %',
+                                    font: { size: 11 }
+                                },
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: (value) => value.toFixed(0) + '%'
+                                }
+                            }
                         }
                     }
                 });
@@ -1053,6 +1229,80 @@
                     verdictEl.style.color = '#2F855A';
                 } else {
                     verdictEl.innerHTML = `⚠️ <strong>Run more trials!</strong> Difference of ${diff.toFixed(2)}% suggests sample size may be too small. Try 10,000+ selections.`;
+                    verdictEl.style.color = '#7D6608';
+                }
+
+                // Show the full story simulation section
+                document.getElementById('jen-story-simulation').style.display = 'block';
+            },
+
+            // Run Full Jen Story Simulation
+            async runJenStorySimulation(totalGames) {
+                const config1 = this.getExperimentConfig(1);
+                const config2 = this.getExperimentConfig(2);
+                const config3 = this.getExperimentConfig(3);
+
+                // Show progress
+                document.getElementById('jen-story-progress').style.display = 'block';
+                document.getElementById('jen-story-results').style.display = 'none';
+                document.getElementById('jen-story-total').textContent = totalGames;
+
+                let matchingGames = 0;
+                const updateInterval = Math.max(1, Math.floor(totalGames / 100));
+
+                for (let i = 0; i < totalGames; i++) {
+                    // Run 3 rounds
+                    const r1Selected = this.runSingleSelection(config1.players, config1.imposters);
+                    const r2Selected = this.runSingleSelection(config2.players, config2.imposters);
+                    const r3Selected = this.runSingleSelection(config3.players, config3.imposters);
+
+                    // Check if matches Jen's pattern: selected in R1, NOT in R2, selected in R3
+                    if (r1Selected && !r2Selected && r3Selected) {
+                        matchingGames++;
+                    }
+
+                    // Update progress
+                    if (i % updateInterval === 0 || i === totalGames - 1) {
+                        const progress = ((i + 1) / totalGames) * 100;
+                        document.getElementById('jen-story-progress-fill').style.width = progress + '%';
+                        document.getElementById('jen-story-current').textContent = (i + 1);
+                        await this.yield();
+                    }
+                }
+
+                // Calculate results
+                const simPercent = (matchingGames / totalGames) * 100;
+                const simOdds = totalGames / matchingGames;
+
+                // Display results
+                document.getElementById('jen-story-progress').style.display = 'none';
+                document.getElementById('jen-story-results').style.display = 'block';
+
+                document.getElementById('jen-story-matches').textContent = matchingGames;
+                document.getElementById('jen-story-games').textContent = totalGames;
+                document.getElementById('jen-story-percent').textContent = `Percentage: ${simPercent.toFixed(2)}%`;
+                document.getElementById('jen-story-sim-percent').textContent = simPercent.toFixed(2) + '%';
+                document.getElementById('jen-story-sim-odds').textContent = `(1 in ${Math.round(simOdds)})`;
+
+                // Calculate theoretical
+                const theoreticalP1 = config1.imposters / config1.players;
+                const theoreticalP2Not = 1 - (config2.imposters / config2.players);
+                const theoreticalP3 = config3.imposters / config3.players;
+                const theoreticalCompound = theoreticalP1 * theoreticalP2Not * theoreticalP3;
+                const theoreticalPercent = theoreticalCompound * 100;
+
+                // Verdict
+                const diff = Math.abs(simPercent - theoreticalPercent);
+                const verdictEl = document.getElementById('jen-story-verdict');
+
+                if (diff < 0.5) {
+                    verdictEl.innerHTML = `✅ <strong>Perfect Validation!</strong> Full simulation (${simPercent.toFixed(2)}%) matches theory (${theoreticalPercent.toFixed(2)}%)`;
+                    verdictEl.style.color = '#22543D';
+                } else if (diff < 1.5) {
+                    verdictEl.innerHTML = `✓ <strong>Validated!</strong> Full simulation (${simPercent.toFixed(2)}%) confirms theory (${theoreticalPercent.toFixed(2)}%)`;
+                    verdictEl.style.color = '#2F855A';
+                } else {
+                    verdictEl.innerHTML = `⚠️ Difference: ${diff.toFixed(2)}%. Try 10,000+ games for better accuracy.`;
                     verdictEl.style.color = '#7D6608';
                 }
             },
