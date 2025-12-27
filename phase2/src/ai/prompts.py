@@ -3,7 +3,7 @@ Prompt templates for AI players.
 Separate prompts for imposters vs non-imposters to create information asymmetry.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .schemas import PlayerRole
 
 

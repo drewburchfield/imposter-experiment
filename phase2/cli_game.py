@@ -14,15 +14,12 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 # Add src to path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
-
-# Import from src package
-import sys
-import importlib.util
 
 # Import modules directly
 from src.game_engine.engine import GameEngine, GameConfig
