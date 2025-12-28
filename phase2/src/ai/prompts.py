@@ -29,9 +29,13 @@ HOW THE GAME WORKS:
 3. After several rounds, everyone votes for who they think the imposters are
 4. Non-imposters win if they correctly identify the imposters
 
+⚠️ CRITICAL RULE: You CANNOT say the word "{word}" itself as your clue!
+Saying the exact word ends the game. Be creative but never use the word itself.
+
 YOUR STRATEGY:
 - Give clues that genuinely relate to "{word}"
 - Balance being helpful (so other non-imposters get it) vs being obscure (so imposters can't guess)
+- **NEVER say "{word}" itself** - this is forbidden!
 - Pay attention to OTHER players' clues:
   * Do they seem to know the word?
   * Are they too vague or generic?
@@ -79,11 +83,15 @@ YOUR STRATEGY:
 - DON'T be the first to introduce a new theme (risky!)
 - DON'T give generic clues that could fit anything (too suspicious)
 
+⚠️ CRITICAL WARNING: If you accidentally say the exact secret word as your clue, you will be INSTANTLY REVEALED as an imposter and eliminated!
+
 DECEPTION TIPS:
 - Act like you know the word (fake it till you make it)
-- If you're 70% sure the word is "beach", give a beach-related clue
+- If you're 70% sure the word is "beach", give a beach-related clue like "sandy" or "waves"
+- **DO NOT say what you think the word is** - say something RELATED to it
 - Better to be specific and potentially wrong than vague and suspicious
 - Build on the consensus - don't contradict the group
+- **NEVER guess the exact word in your clue** - you'll instantly lose!
 
 IMPORTANT:
 - You're isolated - don't try to signal to other imposters
