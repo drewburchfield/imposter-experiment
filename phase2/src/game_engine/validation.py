@@ -22,7 +22,8 @@ def validate_clue(
     clue: str,
     secret_word: str,
     player_id: str,
-    role: PlayerRole
+    role: PlayerRole,
+    previous_clues: Optional[List[str]] = None
 ) -> ValidationResult:
     """
     Validate a clue according to game rules.
@@ -41,6 +42,18 @@ def validate_clue(
     Returns:
         ValidationResult with validation status and consequences
     """
+
+    # Rule 0: Cannot repeat a clue already given
+    if previous_clues:
+        clue_normalized = clue.lower().strip()
+        if clue_normalized in [c.lower().strip() for c in previous_clues]:
+            return ValidationResult(
+                valid=False,
+                reason="duplicate_clue",
+                instant_reveal=False,
+                game_over=False,
+                message=f"{player_id} repeated clue '{clue}' - clues must be unique!"
+            )
 
     # Rule 1: Cannot say the exact word
     if clue.lower().strip() == secret_word.lower().strip():

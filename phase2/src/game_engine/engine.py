@@ -335,12 +335,14 @@ class GameEngine:
                     confidence=0
                 )
 
-            # VALIDATE CLUE
+            # VALIDATE CLUE (including duplicate check)
+            previous_clue_words = [c.clue for c in self.all_clues]
             validation = validate_clue(
                 clue=response.clue,
                 secret_word=self.config.word,
                 player_id=player.player_id,
-                role=player.role
+                role=player.role,
+                previous_clues=previous_clue_words
             )
 
             # Handle validation result
