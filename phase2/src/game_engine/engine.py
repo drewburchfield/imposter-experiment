@@ -13,16 +13,21 @@ from collections import defaultdict
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
 from ..ai.openrouter import OpenRouterClient, get_model_id
-from ..utils.cli_display import (
-    print_player_circle,
-    print_round_header,
-    print_clue,
-    print_voting_header,
-    print_vote,
-    print_results as display_results,
-    pause,
-    Colors
-)
+
+# Optional CLI display (only import if available)
+try:
+    from ..utils.cli_display import (
+        print_player_circle,
+        print_round_header,
+        print_clue,
+        print_voting_header,
+        print_vote,
+        pause,
+        Colors
+    )
+    CLI_DISPLAY_AVAILABLE = True
+except ImportError:
+    CLI_DISPLAY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -114,10 +119,11 @@ class GameEngine:
     - Calculate results
     """
 
-    def __init__(self, config: GameConfig, openrouter_client: OpenRouterClient):
+    def __init__(self, config: GameConfig, openrouter_client: OpenRouterClient, visual_mode: bool = False):
         self.config = config
         self.openrouter = openrouter_client
         self.phase = GamePhase.SETUP
+        self.visual_mode = visual_mode  # Enable CLI visual display
 
         self.players: List[AIPlayer] = []
         self.current_round = 0
@@ -125,6 +131,9 @@ class GameEngine:
         # Game history
         self.all_clues: List[ClueRecord] = []
         self.all_votes: List[VoteRecord] = []
+
+        # Event callback for streaming
+        self.event_callback = None
 
         logger.info(f"GameEngine created: {config.num_players} players, "
                    f"{config.num_imposters} imposters, word='{config.word}'")
@@ -210,6 +219,10 @@ class GameEngine:
         else:
             return {pid: self.config.default_model for pid in player_ids}
 
+    def set_event_callback(self, callback):
+        """Set callback for streaming events to API/UI"""
+        self.event_callback = callback
+
     async def run_game(self) -> GameResult:
         """
         Main game loop: Run all rounds, then voting, then results.
@@ -251,10 +264,11 @@ class GameEngine:
         return result
 
     async def _execute_clue_round(self):
-        """Execute one round where all players give clues with visual display"""
+        """Execute one round where all players give clues"""
 
-        # Show round header
-        print_round_header(self.current_round, self.config.num_rounds)
+        # Visual display (CLI only)
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_round_header(self.current_round, self.config.num_rounds)
 
         # Build context for all players
         context = GameContext(
@@ -262,9 +276,9 @@ class GameEngine:
             clues_so_far=self._get_clue_dicts()
         )
 
-        # Show all players before clues
-        print_player_circle(self.players, current_speaker=None)
-        pause(1.5, "All players are thinking...")
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_player_circle(self.players, current_speaker=None)
+            pause(1.5, "All players are thinking...")
 
         # Prepare API requests for all players
         requests = []
@@ -276,16 +290,20 @@ class GameEngine:
                 "temperature": self.config.temperature
             })
 
-        # Call all AIs in parallel (behind the scenes)
-        print(f"\n{Colors.DIM}🤖 Calling {len(requests)} AIs concurrently...{Colors.RESET}")
+        # Call all AIs in parallel
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"\n{Colors.DIM}🤖 Calling {len(requests)} AIs concurrently...{Colors.RESET}")
+
         responses = await self.openrouter.batch_call(
             requests,
             response_format=ClueResponse
         )
-        print(f"{Colors.SUCCESS}✓ All AI responses received{Colors.RESET}\n")
-        pause(1.0)
 
-        # Display clues ONE AT A TIME (human-observable)
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"{Colors.SUCCESS}✓ All AI responses received{Colors.RESET}\n")
+            pause(1.0)
+
+        # Process and display clues
         for player, response in zip(self.players, responses):
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} API call failed: {response}")
@@ -296,7 +314,7 @@ class GameEngine:
                 )
 
             # Record clue
-            self.all_clues.append(ClueRecord(
+            clue_record = ClueRecord(
                 round=self.current_round,
                 player_id=player.player_id,
                 player_model=player.model_name,
@@ -305,21 +323,36 @@ class GameEngine:
                 thinking=response.thinking,
                 confidence=response.confidence,
                 word_hypothesis=response.word_hypothesis
-            ))
-
+            )
+            self.all_clues.append(clue_record)
             player.record_clue(response)
 
-            # VISUAL DISPLAY with pause
-            print_player_circle(self.players, current_speaker=player.player_id)
-            print_clue(
-                player_id=player.player_id,
-                role=player.role,
-                model=player.model_name,
-                clue=response.clue,
-                thinking=response.thinking,
-                word_hypothesis=response.word_hypothesis,
-                pause_time=4.0  # 4 seconds to read each clue
-            )
+            # Emit event for streaming
+            if self.event_callback:
+                await self.event_callback({
+                    'type': 'clue',
+                    'round': self.current_round,
+                    'player_id': player.player_id,
+                    'player_model': player.model_name,
+                    'role': player.role.value,
+                    'clue': response.clue,
+                    'thinking': response.thinking,
+                    'confidence': response.confidence,
+                    'word_hypothesis': response.word_hypothesis
+                })
+
+            # Visual display (CLI only)
+            if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                print_player_circle(self.players, current_speaker=player.player_id)
+                print_clue(
+                    player_id=player.player_id,
+                    role=player.role,
+                    model=player.model_name,
+                    clue=response.clue,
+                    thinking=response.thinking,
+                    word_hypothesis=response.word_hypothesis,
+                    pause_time=4.0
+                )
 
     async def _execute_discussion_phase(self):
         """Optional discussion phase (not implemented in MVP)"""
@@ -327,10 +360,10 @@ class GameEngine:
         pass
 
     async def _execute_voting(self):
-        """All players vote for suspected imposters with visual display"""
+        """All players vote for suspected imposters"""
 
-        # Show voting header
-        print_voting_header()
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_voting_header()
 
         # Prepare voting requests
         requests = []
@@ -342,19 +375,22 @@ class GameEngine:
             requests.append({
                 "messages": messages,
                 "model": get_model_id(player.model_name),
-                "temperature": 0.5  # Lower temp for voting (more analytical)
+                "temperature": 0.5
             })
 
-        # Call all AIs in parallel (behind the scenes)
-        print(f"\n{Colors.DIM}🤖 All players analyzing {len(self.all_clues)} clues...{Colors.RESET}")
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"\n{Colors.DIM}🤖 All players analyzing {len(self.all_clues)} clues...{Colors.RESET}")
+
         responses = await self.openrouter.batch_call(
             requests,
             response_format=VoteResponse
         )
-        print(f"{Colors.SUCCESS}✓ Votes received{Colors.RESET}\n")
-        pause(1.0)
 
-        # Display votes ONE AT A TIME
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"{Colors.SUCCESS}✓ Votes received{Colors.RESET}\n")
+            pause(1.0)
+
+        # Process votes
         for player, response in zip(self.players, responses):
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} voting failed: {response}")
@@ -365,24 +401,36 @@ class GameEngine:
                     reasoning_per_player={}
                 )
 
-            self.all_votes.append(VoteRecord(
+            vote_record = VoteRecord(
                 player_id=player.player_id,
                 voted_for=response.votes,
                 reasoning=response.reasoning_per_player,
                 thinking=response.thinking,
                 confidence=response.confidence
-            ))
-
+            )
+            self.all_votes.append(vote_record)
             player.record_vote(response)
 
-            # VISUAL DISPLAY with pause
-            print_vote(
-                player_id=player.player_id,
-                votes=response.votes,
-                thinking=response.thinking,
-                reasoning=response.reasoning_per_player,
-                pause_time=3.0  # 3 seconds per vote
-            )
+            # Emit event for streaming
+            if self.event_callback:
+                await self.event_callback({
+                    'type': 'vote',
+                    'player_id': player.player_id,
+                    'votes': response.votes,
+                    'thinking': response.thinking,
+                    'reasoning': response.reasoning_per_player,
+                    'confidence': response.confidence
+                })
+
+            # Visual display (CLI only)
+            if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                print_vote(
+                    player_id=player.player_id,
+                    votes=response.votes,
+                    thinking=response.thinking,
+                    reasoning=response.reasoning_per_player,
+                    pause_time=3.0
+                )
 
     def _get_clue_dicts(self) -> List[Dict]:
         """Convert clue records to simple dicts for context"""

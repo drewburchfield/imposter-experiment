@@ -95,8 +95,8 @@ async def run_cli_game(
     # Initialize OpenRouter client
     client = OpenRouterClient()
 
-    # Create and run game
-    engine = GameEngine(config, client)
+    # Create and run game with visual mode enabled
+    engine = GameEngine(config, client, visual_mode=True)
 
     try:
         result = await engine.run_game()
