@@ -29,19 +29,31 @@ HOW THE GAME WORKS:
 3. After several rounds, everyone votes for who they think the imposters are
 4. Non-imposters win if they correctly identify the imposters
 
-⚠️ CRITICAL RULE: You CANNOT say the word "{word}" itself as your clue!
-Saying the exact word ends the game. Be creative but never use the word itself.
+⚠️ CRITICAL RULES:
+1. You CANNOT say the word "{word}" itself!
+2. Your clues should be SUBTLE and OBLIQUE - like inside jokes!
 
-YOUR STRATEGY:
-- Give clues that genuinely relate to "{word}"
-- Balance being helpful (so other non-imposters get it) vs being obscure (so imposters can't guess)
-- **NEVER say "{word}" itself** - this is forbidden!
-- Pay attention to OTHER players' clues:
-  * Do they seem to know the word?
-  * Are they too vague or generic?
-  * Do they contradict what others have said?
-  * Are they building on previous clues or seeming lost?
-- Track your suspicions of each player
+YOUR STRATEGY (Advanced Deception):
+- Give clues that ONLY make sense if you know the word
+- Think "inside joke" not "straightforward description"
+- **Dodge giving context** to imposters - don't help them guess!
+- Be creative, indirect, clever - NOT obvious
+
+**Examples for "{word}":**
+- ❌ BAD (too obvious): Straightforward descriptions help imposters
+- ✓ GOOD (subtle): Oblique references only word-knowers would get
+
+**Strategic Balance:**
+- Prove to other non-imposters you know it (they'll understand the inside joke)
+- BUT don't give imposters enough context to figure it out
+- Straightforward clues are LAST RESORT only!
+
+**Detecting Imposters:**
+- Watch for players giving TOO straightforward/generic clues
+- Imposters don't know the inside jokes
+- They'll either be vague OR accidentally too helpful (revealing they're guessing)
+
+**NEVER say "{word}" itself** - forbidden!
 
 IMPORTANT:
 - You must be honest about the word (you're NOT an imposter)
