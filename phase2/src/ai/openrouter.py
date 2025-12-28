@@ -96,6 +96,13 @@ class OpenRouterClient:
                     }
                 }
 
+            # LOG REQUEST
+            logger.info(f"📤 OpenRouter Request:")
+            logger.info(f"   Model: {model}")
+            logger.info(f"   Messages: {len(messages)} messages")
+            logger.info(f"   Response format: {response_format.__name__ if response_format else 'text'}")
+            logger.debug(f"   Full payload: {json.dumps(payload, indent=2)}")
+
             # Make request with retries
             for attempt in range(3):
                 try:
@@ -107,28 +114,40 @@ class OpenRouterClient:
                             timeout=aiohttp.ClientTimeout(total=30)
                         ) as response:
 
+                            # LOG RESPONSE STATUS
+                            logger.info(f"📥 OpenRouter Response: {response.status}")
+
                             if response.status == 200:
                                 data = await response.json()
                                 content = data["choices"][0]["message"]["content"]
 
+                                logger.info(f"   ✅ Success! Length: {len(content)} chars")
+                                logger.debug(f"   Content: {content[:200]}...")
+
                                 if response_format:
                                     # Parse and validate with Pydantic
                                     try:
-                                        return response_format.model_validate_json(content)
+                                        parsed = response_format.model_validate_json(content)
+                                        logger.info(f"   ✅ JSON validated successfully")
+                                        return parsed
                                     except Exception as e:
-                                        logger.error(f"Failed to parse response: {content}")
+                                        logger.error(f"   ❌ JSON parsing failed!")
+                                        logger.error(f"   Content: {content}")
+                                        logger.error(f"   Error: {e}")
                                         raise ValueError(f"Invalid JSON from AI: {e}")
 
                                 return {"content": content}
 
                             elif response.status == 429:  # Rate limit
                                 wait_time = 2 ** attempt
-                                logger.warning(f"Rate limited, waiting {wait_time}s...")
+                                logger.warning(f"   ⚠️  Rate limited, waiting {wait_time}s...")
                                 await asyncio.sleep(wait_time)
                                 continue
 
                             else:
                                 error_text = await response.text()
+                                logger.error(f"   ❌ API Error {response.status}")
+                                logger.error(f"   Response: {error_text}")
                                 raise Exception(f"API error {response.status}: {error_text}")
 
                 except asyncio.TimeoutError:
