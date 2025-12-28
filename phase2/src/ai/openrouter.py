@@ -183,42 +183,63 @@ class OpenRouterClient:
         return results
 
 
-# Model registry with pricing info
+# Model registry with verified OpenRouter model IDs
 AVAILABLE_MODELS = {
     'llama': {
-        'id': 'meta-llama/llama-3.1-8b-instruct',
-        'name': 'Llama 3.1 8B',
-        'cost_per_1m': 0.06,
+        'id': 'meta-llama/llama-3.1-8b-instruct:free',
+        'name': 'Llama 3.1 8B (Free)',
+        'cost_per_1m': 0.0,
         'speed': 'very_fast',
-        'notes': 'Best cost/performance ratio'
+        'notes': 'Free tier, reliable, great for testing'
     },
-    'gemini': {
-        'id': 'google/gemini-flash-1.5-8b',
-        'name': 'Gemini Flash 1.5 8B',
-        'cost_per_1m': 0.075,
-        'speed': 'very_fast',
-        'notes': 'Excellent reasoning at low cost'
+    'llama-70b': {
+        'id': 'meta-llama/llama-3.1-70b-instruct',
+        'name': 'Llama 3.1 70B',
+        'cost_per_1m': 0.52,
+        'speed': 'fast',
+        'notes': 'Much smarter, better reasoning'
     },
     'haiku': {
         'id': 'anthropic/claude-3-haiku',
         'name': 'Claude 3 Haiku',
         'cost_per_1m': 0.25,
         'speed': 'fast',
-        'notes': 'Sophisticated reasoning, best for deception'
+        'notes': 'Sophisticated reasoning, excellent for deception'
     },
-    'gpt4-mini': {
+    'sonnet': {
+        'id': 'anthropic/claude-3.5-sonnet',
+        'name': 'Claude 3.5 Sonnet',
+        'cost_per_1m': 3.0,
+        'speed': 'medium',
+        'notes': 'Premium intelligence, best strategic play'
+    },
+    'gpt4o-mini': {
         'id': 'openai/gpt-4o-mini',
         'name': 'GPT-4o Mini',
         'cost_per_1m': 0.15,
         'speed': 'fast',
-        'notes': 'OpenAI quality at reasonable cost'
+        'notes': 'OpenAI quality, good balance'
+    },
+    'gpt4o': {
+        'id': 'openai/gpt-4o',
+        'name': 'GPT-4o',
+        'cost_per_1m': 2.5,
+        'speed': 'medium',
+        'notes': 'Premium OpenAI, excellent reasoning'
     },
     'mistral': {
-        'id': 'mistralai/mistral-7b-instruct',
-        'name': 'Mistral 7B',
-        'cost_per_1m': 0.06,
+        'id': 'mistralai/mistral-7b-instruct:free',
+        'name': 'Mistral 7B (Free)',
+        'cost_per_1m': 0.0,
         'speed': 'very_fast',
-        'notes': 'Good alternative to Llama'
+        'notes': 'Free alternative to Llama'
+    },
+    'qwen': {
+        'id': 'qwen/qwen-2-7b-instruct:free',
+        'name': 'Qwen 2 7B (Free)',
+        'cost_per_1m': 0.0,
+        'speed': 'very_fast',
+        'notes': 'Free Chinese model, good performance'
     }
 }
 
