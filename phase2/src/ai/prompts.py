@@ -158,22 +158,13 @@ Previous clues given:
 
 SECRET WORD YOU KNOW: "{word}"
 
-🧠 STRATEGIC REASONING (Think like a human player):
+🧠 STRATEGIC REASONING:
 
-STEP 1: Analyze clue combinations
-- What patterns do previous clues reveal TOGETHER?
-- If you combine them, how close are they to revealing "{word}"?
-- Are imposters getting enough context to guess?
-
-STEP 2: Plan your clue carefully
-- What could you say that PROVES you know "{word}"?
-- But doesn't make the COMBINED clues too obvious?
-- Think: What oblique reference would other word-knowers understand?
-
-STEP 3: Avoid making it too easy
-- Don't "complete the puzzle" for imposters
-- Your clue + previous clues shouldn't be a dead giveaway
-- Use inside-joke references, not straightforward descriptions
+Think through your clue choice by considering:
+- What pattern do previous clues create TOGETHER?
+- Does adding your clue make the combined pattern too obvious?
+- What associative word (not descriptor) proves you know "{word}"?
+- Examples: For beach → bicycle, windy, sunburn (NOT waves, sand, ocean)
 
 **Example thought process:**
 "Previous clues are 'waves' and 'vacation'... together these hint at beach.
@@ -199,10 +190,12 @@ Types of associations:
 - Common experiences (sunburn, traffic, parking)
 - Cultural context (vacation, weekend, summer)
 
-Respond with JSON:
-- "thinking": Full strategic analysis (list previous clues, identify combined pattern, brainstorm associative words NOT descriptors, select most oblique one)
-- "clue": ONE ASSOCIATIVE WORD (not a descriptor!)
-- "confidence": 0-100"""
+Respond with valid JSON (string values only, no nested objects):
+{{
+  "thinking": "Your strategic analysis as a single text string - analyze combinations, explain your associative word choice",
+  "clue": "one-word",
+  "confidence": 85
+}}"""
 
     else:  # Imposter
         return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
@@ -213,27 +206,13 @@ Previous clues you've observed:
 CATEGORY YOU KNOW: "{category}"
 WORD YOU DON'T KNOW: ???
 
-🎭 IMPOSTER SURVIVAL STRATEGY (Think like a human imposter):
+🎭 IMPOSTER SURVIVAL STRATEGY:
 
-STEP 1: Pattern analysis
-- List all previous clues: [extract them]
-- What PATTERN do they form together?
-- What themes emerge when you combine them?
-
-STEP 2: Word hypothesis
-- Based on combined clues, what's your best guess?
-- What word in "{category}" would fit ALL these clues?
-- Confidence level in this guess?
-
-STEP 3: Safe clue selection
-- What would someone who KNOWS this word say?
-- What fits the pattern without being too specific (in case you're wrong)?
-- What echoes previous themes but adds subtle variation?
-
-STEP 4: Avoid detection
-- Is your clue too generic? (Red flag!)
-- Is it too specific if you're wrong? (Also red flag!)
-- Does it build on the consensus naturally?
+Analyze previous clues to guess the word, then give a clue that:
+- Fits the pattern you see in combined clues
+- Sounds like you know the word (confident!)
+- Isn't too specific (in case you're wrong)
+- Builds on the consensus theme
 
 **Example thought process:**
 "Clues: 'waves', 'vacation', 'seashells'
@@ -243,11 +222,13 @@ What would a knower say? Maybe 'coastline' or 'tides'
 Safe clue that fits: 'coastal' - fits pattern, not too specific
 Avoids: 'beach' (might be exact word), 'water' (too generic)"
 
-Respond with JSON:
-- "thinking": Complete analysis (list clues, identify pattern, form hypothesis, select safe clue, explain blending strategy)
-- "clue": Your strategic one-word clue
-- "word_hypothesis": Your current best guess at the secret word
-- "confidence": How confident you are in your hypothesis and clue (0-100)"""
+Respond with valid JSON (string values only):
+{{
+  "thinking": "Your strategic analysis as a single text string - what pattern you see, your word guess, why your clue fits",
+  "clue": "one-word",
+  "word_hypothesis": "your-guess",
+  "confidence": 70
+}}"""
 
 
 # ============================================
