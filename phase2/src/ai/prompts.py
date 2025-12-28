@@ -151,47 +151,85 @@ def build_clue_prompt(
         clue_history = "No clues given yet - you're going first!"
 
     if role == PlayerRole.NON_IMPOSTER:
-        return f"""=== ROUND {current_round} - Your Turn ===
+        return f"""=== ROUND {current_round} - Strategic Clue Planning ===
 
-Previous clues:
+Previous clues given:
 {clue_history}
 
-Now it's YOUR turn to give a clue about "{word}".
+SECRET WORD YOU KNOW: "{word}"
 
-Remember:
-- Make it relevant to "{word}"
-- Help other non-imposters understand
-- But don't make it SO obvious that imposters can guess the word
-- Consider what's already been said - add new information
-- Be creative but relevant
+🧠 STRATEGIC REASONING (Think like a human player):
 
-Respond with JSON containing:
-- "thinking": Your strategic thoughts (2-3 sentences about what you're considering)
-- "clue": Your one-word clue
-- "confidence": How confident you are (0-100)"""
+STEP 1: Analyze clue combinations
+- What patterns do previous clues reveal TOGETHER?
+- If you combine them, how close are they to revealing "{word}"?
+- Are imposters getting enough context to guess?
+
+STEP 2: Plan your clue carefully
+- What could you say that PROVES you know "{word}"?
+- But doesn't make the COMBINED clues too obvious?
+- Think: What oblique reference would other word-knowers understand?
+
+STEP 3: Avoid making it too easy
+- Don't "complete the puzzle" for imposters
+- Your clue + previous clues shouldn't be a dead giveaway
+- Use inside-joke references, not straightforward descriptions
+
+**Example thought process:**
+"Previous clues are 'waves' and 'vacation'... together these hint at beach.
+If I say 'sandy' that's TOO obvious combined.
+Instead: 'seashells' - still beach but more oblique.
+Other non-imposters will get it, imposters won't be 100% sure."
+
+Respond with JSON:
+- "thinking": Your complete strategic analysis (analyze combinations, plan your clue, explain why it's subtle but sufficient)
+- "clue": Your one-word oblique clue
+- "confidence": How confident this clue proves you know the word without revealing it (0-100)"""
 
     else:  # Imposter
-        return f"""=== ROUND {current_round} - Your Turn (You're Blending In!) ===
+        return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
 
 Previous clues you've observed:
 {clue_history}
 
-Based on these clues, what do you think the secret word might be?
-Remember: You only know it's in the "{category}" category.
+CATEGORY YOU KNOW: "{category}"
+WORD YOU DON'T KNOW: ???
 
-Your task: Give a clue that makes it seem like you KNOW the word!
+🎭 IMPOSTER SURVIVAL STRATEGY (Think like a human imposter):
 
-Strategy:
-- Look for patterns in others' clues
-- What word would connect all these clues?
-- Give something that fits both the category and the pattern
-- Sound confident!
+STEP 1: Pattern analysis
+- List all previous clues: [extract them]
+- What PATTERN do they form together?
+- What themes emerge when you combine them?
 
-Respond with JSON containing:
-- "thinking": What you're inferring from the clues, your strategy (2-3 sentences)
-- "clue": Your one-word clue (make it sound like you know the word!)
-- "word_hypothesis": What you currently think the word might be
-- "confidence": How confident you are in your blending (0-100)"""
+STEP 2: Word hypothesis
+- Based on combined clues, what's your best guess?
+- What word in "{category}" would fit ALL these clues?
+- Confidence level in this guess?
+
+STEP 3: Safe clue selection
+- What would someone who KNOWS this word say?
+- What fits the pattern without being too specific (in case you're wrong)?
+- What echoes previous themes but adds subtle variation?
+
+STEP 4: Avoid detection
+- Is your clue too generic? (Red flag!)
+- Is it too specific if you're wrong? (Also red flag!)
+- Does it build on the consensus naturally?
+
+**Example thought process:**
+"Clues: 'waves', 'vacation', 'seashells'
+Pattern: Water + leisure + beach items
+Hypothesis: Probably 'beach' or 'ocean'
+What would a knower say? Maybe 'coastline' or 'tides'
+Safe clue that fits: 'coastal' - fits pattern, not too specific
+Avoids: 'beach' (might be exact word), 'water' (too generic)"
+
+Respond with JSON:
+- "thinking": Complete analysis (list clues, identify pattern, form hypothesis, select safe clue, explain blending strategy)
+- "clue": Your strategic one-word clue
+- "word_hypothesis": Your current best guess at the secret word
+- "confidence": How confident you are in your hypothesis and clue (0-100)"""
 
 
 # ============================================
