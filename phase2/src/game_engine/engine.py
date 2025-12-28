@@ -59,10 +59,8 @@ class GameConfig:
 
     # Model distribution (for 'mixed' strategy)
     model_distribution: Dict[str, int] = field(default_factory=lambda: {
-        'llama': 4,
-        'gemini': 2,
-        'haiku': 1,
-        'gpt4-mini': 1
+        'llama': 6,  # Use all Llama for reliability
+        'haiku': 2,  # Premium reasoning
     })
 
     # Optional features
