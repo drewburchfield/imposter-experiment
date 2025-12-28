@@ -11,11 +11,14 @@ interface ClueDisplayProps {
 }
 
 export const ClueDisplay: React.FC<ClueDisplayProps> = ({ clues }) => {
+  // Show most recent first (reverse chronological order)
+  const sortedClues = [...clues].reverse();
+
   return (
     <div className="clue-display">
-      <h3>🗣️ Clues Given</h3>
+      <h3>🗣️ Clues (Most Recent First)</h3>
       <div className="clue-list">
-        {clues.map((clue, index) => (
+        {sortedClues.map((clue, index) => (
           <div key={index} className={`clue-item ${clue.role}`}>
             <div className="clue-header">
               <span className="clue-player">{clue.player_id}</span>
