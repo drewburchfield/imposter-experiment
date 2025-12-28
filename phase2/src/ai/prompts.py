@@ -181,10 +181,28 @@ If I say 'sandy' that's TOO obvious combined.
 Instead: 'seashells' - still beach but more oblique.
 Other non-imposters will get it, imposters won't be 100% sure."
 
+**CRITICAL: Use ASSOCIATIVE words, not DESCRIPTIVE words!**
+
+For "{word}":
+❌ Descriptive (too obvious): Direct features/parts of {word}
+✅ Associative (oblique): What happens AT/NEAR/WITH {word}
+
+Examples of associative thinking:
+- Beach: bicycle, hurricane, windy, sunburn, lifeguard, cloudy
+- Pizza: delivery, friday, oven, grease, argument, napkins
+- Basketball: squeaky, march, sneakers, timeout, buzzer
+
+Types of associations:
+- Feelings (blissful, dangerous, relaxing)
+- Weather (windy, sunny, cloudy, hot, cold)
+- Related activities (bicycle, surfing, walking)
+- Common experiences (sunburn, traffic, parking)
+- Cultural context (vacation, weekend, summer)
+
 Respond with JSON:
-- "thinking": Your complete strategic analysis (analyze combinations, plan your clue, explain why it's subtle but sufficient)
-- "clue": Your one-word oblique clue
-- "confidence": How confident this clue proves you know the word without revealing it (0-100)"""
+- "thinking": Full strategic analysis (list previous clues, identify combined pattern, brainstorm associative words NOT descriptors, select most oblique one)
+- "clue": ONE ASSOCIATIVE WORD (not a descriptor!)
+- "confidence": 0-100"""
 
     else:  # Imposter
         return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
