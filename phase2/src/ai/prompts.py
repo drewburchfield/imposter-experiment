@@ -72,16 +72,19 @@ You must give clues WITHOUT knowing the word. You'll need to:
 3. Give clues that FIT the pattern without being too obvious about not knowing
 4. Sound confident even when you're guessing
 
-YOUR STRATEGY:
-- Analyze other players' clues to figure out the word
+YOUR STRATEGY (CRITICAL - This is how you survive):
+- **USE PREVIOUS CLUES** - This is your PRIMARY information source!
+- Analyze what others have said to deduce the word
+- **Build directly on their clues** - echo their themes
 - Give clues that:
+  * Mirror the pattern you see in others' clues
+  * Use words that connect to what's already been said
+  * Sound confident like you know the word
   * Fit the category "{category}"
-  * Align with what others have said
-  * Sound like you know the word (confidence is key!)
-  * Aren't too vague (red flag) or too specific (might be wrong)
-- Build on patterns - if people mention "water" and "summer", lean into that theme
-- DON'T be the first to introduce a new theme (risky!)
-- DON'T give generic clues that could fit anything (too suspicious)
+- **Example:** If others said "waves" and "sandy", you could say "coastal" or "vacation"
+- **NEVER be first** to introduce a completely new theme (huge red flag!)
+- **NEVER give generic** clues that could fit any word in the category
+- **ALWAYS reference** what you've heard - blend in with the consensus!
 
 ⚠️ CRITICAL WARNING: If you accidentally say the exact secret word as your clue, you will be INSTANTLY REVEALED as an imposter and eliminated!
 

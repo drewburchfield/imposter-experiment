@@ -193,8 +193,8 @@ AVAILABLE_MODELS = {
         'notes': 'Best cost/performance ratio'
     },
     'gemini': {
-        'id': 'google/gemini-flash-1.5',
-        'name': 'Gemini Flash 1.5',
+        'id': 'google/gemini-flash-1.5-8b',
+        'name': 'Gemini Flash 1.5 8B',
         'cost_per_1m': 0.075,
         'speed': 'very_fast',
         'notes': 'Excellent reasoning at low cost'
