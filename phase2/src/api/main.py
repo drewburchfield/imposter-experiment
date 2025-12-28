@@ -6,6 +6,7 @@ Provides REST API and Server-Sent Events (SSE) streaming for real-time game obse
 import asyncio
 import uuid
 import os
+import logging
 from typing import Dict, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
@@ -14,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
 import json
+
+logger = logging.getLogger(__name__)
 
 from ..game_engine.engine import GameEngine, GameConfig, GameResult
 from ..game_engine.history import GameHistory, init_database

@@ -22,7 +22,7 @@ class ClueResponse(BaseModel):
     thinking: str = Field(
         description="Inner monologue - strategic reasoning about what clue to give and why",
         min_length=10,
-        max_length=500
+        max_length=2000  # Increased for detailed strategic analysis
     )
     clue: str = Field(
         description="The actual one-word clue (can include hyphens)",
@@ -48,11 +48,11 @@ class VoteResponse(BaseModel):
     thinking: str = Field(
         description="Analysis of clues and reasoning for votes",
         min_length=20,
-        max_length=1000
+        max_length=2000  # Increased for detailed analysis
     )
     votes: List[str] = Field(
-        description="List of player IDs to vote out (up to num_imposters)",
-        min_items=1
+        description="List of player IDs to vote out (can be empty if uncertain)",
+        min_items=0  # Allow empty votes if AI is uncertain
     )
     confidence: int = Field(
         description="Overall confidence in these votes (0-100)",
