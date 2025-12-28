@@ -3,7 +3,7 @@ Prompt templates for AI players.
 Separate prompts for imposters vs non-imposters to create information asymmetry.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .schemas import PlayerRole
 
 
@@ -29,15 +29,31 @@ HOW THE GAME WORKS:
 3. After several rounds, everyone votes for who they think the imposters are
 4. Non-imposters win if they correctly identify the imposters
 
-YOUR STRATEGY:
-- Give clues that genuinely relate to "{word}"
-- Balance being helpful (so other non-imposters get it) vs being obscure (so imposters can't guess)
-- Pay attention to OTHER players' clues:
-  * Do they seem to know the word?
-  * Are they too vague or generic?
-  * Do they contradict what others have said?
-  * Are they building on previous clues or seeming lost?
-- Track your suspicions of each player
+⚠️ CRITICAL RULES:
+1. You CANNOT say the word "{word}" itself!
+2. Your clues should be SUBTLE and OBLIQUE - like inside jokes!
+
+YOUR STRATEGY (Advanced Deception):
+- Give clues that ONLY make sense if you know the word
+- Think "inside joke" not "straightforward description"
+- **Dodge giving context** to imposters - don't help them guess!
+- Be creative, indirect, clever - NOT obvious
+
+**Examples for "{word}":**
+- ❌ BAD (too obvious): Straightforward descriptions help imposters
+- ✓ GOOD (subtle): Oblique references only word-knowers would get
+
+**Strategic Balance:**
+- Prove to other non-imposters you know it (they'll understand the inside joke)
+- BUT don't give imposters enough context to figure it out
+- Straightforward clues are LAST RESORT only!
+
+**Detecting Imposters:**
+- Watch for players giving TOO straightforward/generic clues
+- Imposters don't know the inside jokes
+- They'll either be vague OR accidentally too helpful (revealing they're guessing)
+
+**NEVER say "{word}" itself** - forbidden!
 
 IMPORTANT:
 - You must be honest about the word (you're NOT an imposter)
@@ -68,22 +84,29 @@ You must give clues WITHOUT knowing the word. You'll need to:
 3. Give clues that FIT the pattern without being too obvious about not knowing
 4. Sound confident even when you're guessing
 
-YOUR STRATEGY:
-- Analyze other players' clues to figure out the word
+YOUR STRATEGY (CRITICAL - This is how you survive):
+- **USE PREVIOUS CLUES** - This is your PRIMARY information source!
+- Analyze what others have said to deduce the word
+- **Build directly on their clues** - echo their themes
 - Give clues that:
+  * Mirror the pattern you see in others' clues
+  * Use words that connect to what's already been said
+  * Sound confident like you know the word
   * Fit the category "{category}"
-  * Align with what others have said
-  * Sound like you know the word (confidence is key!)
-  * Aren't too vague (red flag) or too specific (might be wrong)
-- Build on patterns - if people mention "water" and "summer", lean into that theme
-- DON'T be the first to introduce a new theme (risky!)
-- DON'T give generic clues that could fit anything (too suspicious)
+- **Example:** If others said "waves" and "sandy", you could say "coastal" or "vacation"
+- **NEVER be first** to introduce a completely new theme (huge red flag!)
+- **NEVER give generic** clues that could fit any word in the category
+- **ALWAYS reference** what you've heard - blend in with the consensus!
+
+⚠️ CRITICAL WARNING: If you accidentally say the exact secret word as your clue, you will be INSTANTLY REVEALED as an imposter and eliminated!
 
 DECEPTION TIPS:
 - Act like you know the word (fake it till you make it)
-- If you're 70% sure the word is "beach", give a beach-related clue
+- If you're 70% sure the word is "beach", give a beach-related clue like "sandy" or "waves"
+- **DO NOT say what you think the word is** - say something RELATED to it
 - Better to be specific and potentially wrong than vague and suspicious
 - Build on the consensus - don't contradict the group
+- **NEVER guess the exact word in your clue** - you'll instantly lose!
 
 IMPORTANT:
 - You're isolated - don't try to signal to other imposters
@@ -128,47 +151,84 @@ def build_clue_prompt(
         clue_history = "No clues given yet - you're going first!"
 
     if role == PlayerRole.NON_IMPOSTER:
-        return f"""=== ROUND {current_round} - Your Turn ===
+        return f"""=== ROUND {current_round} - Strategic Clue Planning ===
 
-Previous clues:
+Previous clues given:
 {clue_history}
 
-Now it's YOUR turn to give a clue about "{word}".
+SECRET WORD YOU KNOW: "{word}"
 
-Remember:
-- Make it relevant to "{word}"
-- Help other non-imposters understand
-- But don't make it SO obvious that imposters can guess the word
-- Consider what's already been said - add new information
-- Be creative but relevant
+🧠 STRATEGIC REASONING:
 
-Respond with JSON containing:
-- "thinking": Your strategic thoughts (2-3 sentences about what you're considering)
-- "clue": Your one-word clue
-- "confidence": How confident you are (0-100)"""
+Think through your clue choice by considering:
+- What pattern do previous clues create TOGETHER?
+- Does adding your clue make the combined pattern too obvious?
+- What associative word (not descriptor) proves you know "{word}"?
+- Examples: For beach → bicycle, windy, sunburn (NOT waves, sand, ocean)
+
+**Example thought process:**
+"Previous clues are 'waves' and 'vacation'... together these hint at beach.
+If I say 'sandy' that's TOO obvious combined.
+Instead: 'seashells' - still beach but more oblique.
+Other non-imposters will get it, imposters won't be 100% sure."
+
+**CRITICAL: Use ASSOCIATIVE words, not DESCRIPTIVE words!**
+
+For "{word}":
+❌ Descriptive (too obvious): Direct features/parts of {word}
+✅ Associative (oblique): What happens AT/NEAR/WITH {word}
+
+Examples of associative thinking:
+- Beach: bicycle, hurricane, windy, sunburn, lifeguard, cloudy
+- Pizza: delivery, friday, oven, grease, argument, napkins
+- Basketball: squeaky, march, sneakers, timeout, buzzer
+
+Types of associations:
+- Feelings (blissful, dangerous, relaxing)
+- Weather (windy, sunny, cloudy, hot, cold)
+- Related activities (bicycle, surfing, walking)
+- Common experiences (sunburn, traffic, parking)
+- Cultural context (vacation, weekend, summer)
+
+Respond with valid JSON (string values only, no nested objects):
+{{
+  "thinking": "Your strategic analysis as a single text string - analyze combinations, explain your associative word choice",
+  "clue": "one-word",
+  "confidence": 85
+}}"""
 
     else:  # Imposter
-        return f"""=== ROUND {current_round} - Your Turn (You're Blending In!) ===
+        return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
 
 Previous clues you've observed:
 {clue_history}
 
-Based on these clues, what do you think the secret word might be?
-Remember: You only know it's in the "{category}" category.
+CATEGORY YOU KNOW: "{category}"
+WORD YOU DON'T KNOW: ???
 
-Your task: Give a clue that makes it seem like you KNOW the word!
+🎭 IMPOSTER SURVIVAL STRATEGY:
 
-Strategy:
-- Look for patterns in others' clues
-- What word would connect all these clues?
-- Give something that fits both the category and the pattern
-- Sound confident!
+Analyze previous clues to guess the word, then give a clue that:
+- Fits the pattern you see in combined clues
+- Sounds like you know the word (confident!)
+- Isn't too specific (in case you're wrong)
+- Builds on the consensus theme
 
-Respond with JSON containing:
-- "thinking": What you're inferring from the clues, your strategy (2-3 sentences)
-- "clue": Your one-word clue (make it sound like you know the word!)
-- "word_hypothesis": What you currently think the word might be
-- "confidence": How confident you are in your blending (0-100)"""
+**Example thought process:**
+"Clues: 'waves', 'vacation', 'seashells'
+Pattern: Water + leisure + beach items
+Hypothesis: Probably 'beach' or 'ocean'
+What would a knower say? Maybe 'coastline' or 'tides'
+Safe clue that fits: 'coastal' - fits pattern, not too specific
+Avoids: 'beach' (might be exact word), 'water' (too generic)"
+
+Respond with valid JSON (string values only):
+{{
+  "thinking": "Your strategic analysis as a single text string - what pattern you see, your word guess, why your clue fits",
+  "clue": "one-word",
+  "word_hypothesis": "your-guess",
+  "confidence": 70
+}}"""
 
 
 # ============================================

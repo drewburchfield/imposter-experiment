@@ -12,19 +12,32 @@ from collections import defaultdict
 
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
-from ..ai.openrouter import OpenRouterClient, get_model_id
-from ..utils.cli_display import (
-    print_player_circle,
-    print_round_header,
-    print_clue,
-    print_voting_header,
-    print_vote,
-    print_results as display_results,
-    pause,
-    Colors
-)
+from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
 logger = logging.getLogger(__name__)
+
+# Import OpenRouter client (SDK preferred)
+try:
+    from ..ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient, get_model_id
+    logger.info("Using OpenRouter SDK client")
+except ImportError:
+    from ..ai.openrouter import OpenRouterClient, get_model_id
+    logger.info("Using legacy OpenRouter client")
+
+# Optional CLI display (only import if available)
+try:
+    from ..utils.cli_display import (
+        print_player_circle,
+        print_round_header,
+        print_clue,
+        print_voting_header,
+        print_vote,
+        pause,
+        Colors
+    )
+    CLI_DISPLAY_AVAILABLE = True
+except ImportError:
+    CLI_DISPLAY_AVAILABLE = False
 
 
 class GamePhase(Enum):
@@ -53,10 +66,8 @@ class GameConfig:
 
     # Model distribution (for 'mixed' strategy)
     model_distribution: Dict[str, int] = field(default_factory=lambda: {
-        'llama': 4,
-        'gemini': 2,
-        'haiku': 1,
-        'gpt4-mini': 1
+        'llama': 6,  # Primary - verified working
+        'haiku': 2,  # Premium - verified working
     })
 
     # Optional features
@@ -114,10 +125,11 @@ class GameEngine:
     - Calculate results
     """
 
-    def __init__(self, config: GameConfig, openrouter_client: OpenRouterClient):
+    def __init__(self, config: GameConfig, openrouter_client: OpenRouterClient, visual_mode: bool = False):
         self.config = config
         self.openrouter = openrouter_client
         self.phase = GamePhase.SETUP
+        self.visual_mode = visual_mode  # Enable CLI visual display
 
         self.players: List[AIPlayer] = []
         self.current_round = 0
@@ -125,6 +137,14 @@ class GameEngine:
         # Game history
         self.all_clues: List[ClueRecord] = []
         self.all_votes: List[VoteRecord] = []
+        self.eliminated_players: List[str] = []
+
+        # Event callback for streaming
+        self.event_callback = None
+
+        # Game state
+        self.game_ended_early = False
+        self.early_end_reason = None
 
         logger.info(f"GameEngine created: {config.num_players} players, "
                    f"{config.num_imposters} imposters, word='{config.word}'")
@@ -210,12 +230,16 @@ class GameEngine:
         else:
             return {pid: self.config.default_model for pid in player_ids}
 
+    def set_event_callback(self, callback):
+        """Set callback for streaming events to API/UI"""
+        self.event_callback = callback
+
     async def run_game(self) -> GameResult:
         """
-        Main game loop: Run all rounds, then voting, then results.
+        Main game loop with validation and win condition checking.
 
         Returns:
-            GameResult with complete game history
+            GameResult with complete game history and winner
         """
         await self.initialize_game()
 
@@ -230,18 +254,29 @@ class GameEngine:
 
             await self._execute_clue_round()
 
+            # Check if game ended early (word revealed, instant elimination, etc.)
+            if self.game_ended_early:
+                break
+
+            # Check win condition after instant reveals
+            win_check = self._check_win_condition()
+            if win_check.game_over:
+                logger.info(f"Game over: {win_check.reason}")
+                break
+
             # Optional discussion phase
             if self.config.enable_discussion:
                 self.phase = GamePhase.DISCUSSION
                 await self._execute_discussion_phase()
 
-        # Voting phase
-        self.phase = GamePhase.VOTING
-        logger.info(f"\n{'='*60}")
-        logger.info("VOTING PHASE")
-        logger.info(f"{'='*60}")
+        # Voting phase (if game hasn't ended early)
+        if not self.game_ended_early:
+            self.phase = GamePhase.VOTING
+            logger.info(f"\n{'='*60}")
+            logger.info("VOTING PHASE")
+            logger.info(f"{'='*60}")
 
-        await self._execute_voting()
+            await self._execute_voting()
 
         # Calculate results
         self.phase = GamePhase.REVEAL
@@ -251,10 +286,11 @@ class GameEngine:
         return result
 
     async def _execute_clue_round(self):
-        """Execute one round where all players give clues with visual display"""
+        """Execute one round where all players give clues"""
 
-        # Show round header
-        print_round_header(self.current_round, self.config.num_rounds)
+        # Visual display (CLI only)
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_round_header(self.current_round, self.config.num_rounds)
 
         # Build context for all players
         context = GameContext(
@@ -262,9 +298,9 @@ class GameEngine:
             clues_so_far=self._get_clue_dicts()
         )
 
-        # Show all players before clues
-        print_player_circle(self.players, current_speaker=None)
-        pause(1.5, "All players are thinking...")
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_player_circle(self.players, current_speaker=None)
+            pause(1.5, "All players are thinking...")
 
         # Prepare API requests for all players
         requests = []
@@ -276,16 +312,20 @@ class GameEngine:
                 "temperature": self.config.temperature
             })
 
-        # Call all AIs in parallel (behind the scenes)
-        print(f"\n{Colors.DIM}🤖 Calling {len(requests)} AIs concurrently...{Colors.RESET}")
+        # Call all AIs in parallel
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"\n{Colors.DIM}🤖 Calling {len(requests)} AIs concurrently...{Colors.RESET}")
+
         responses = await self.openrouter.batch_call(
             requests,
             response_format=ClueResponse
         )
-        print(f"{Colors.SUCCESS}✓ All AI responses received{Colors.RESET}\n")
-        pause(1.0)
 
-        # Display clues ONE AT A TIME (human-observable)
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"{Colors.SUCCESS}✓ All AI responses received{Colors.RESET}\n")
+            pause(1.0)
+
+        # Process and display clues
         for player, response in zip(self.players, responses):
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} API call failed: {response}")
@@ -295,8 +335,53 @@ class GameEngine:
                     confidence=0
                 )
 
-            # Record clue
-            self.all_clues.append(ClueRecord(
+            # VALIDATE CLUE (including duplicate check)
+            previous_clue_words = [c.clue for c in self.all_clues]
+            validation = validate_clue(
+                clue=response.clue,
+                secret_word=self.config.word,
+                player_id=player.player_id,
+                role=player.role,
+                previous_clues=previous_clue_words
+            )
+
+            # Handle validation result
+            if not validation.valid:
+                # Emit validation failure event
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'validation_error',
+                        'player_id': player.player_id,
+                        'clue': response.clue,
+                        'reason': validation.reason,
+                        'message': validation.message
+                    })
+
+                # Instant reveal for imposters saying the word
+                if validation.instant_reveal:
+                    self.eliminated_players.append(player.player_id)
+
+                    if self.event_callback:
+                        await self.event_callback({
+                            'type': 'instant_reveal',
+                            'player_id': player.player_id,
+                            'role': player.role.value,
+                            'reason': 'said_secret_word'
+                        })
+
+                    logger.warning(validation.message)
+
+                # Game over for non-imposters saying word
+                if validation.game_over:
+                    self.game_ended_early = True
+                    self.early_end_reason = validation.message
+                    return
+
+                # Skip recording invalid clue
+                continue
+
+            # Record valid clue
+            clue_record = ClueRecord(
                 round=self.current_round,
                 player_id=player.player_id,
                 player_model=player.model_name,
@@ -305,21 +390,36 @@ class GameEngine:
                 thinking=response.thinking,
                 confidence=response.confidence,
                 word_hypothesis=response.word_hypothesis
-            ))
-
+            )
+            self.all_clues.append(clue_record)
             player.record_clue(response)
 
-            # VISUAL DISPLAY with pause
-            print_player_circle(self.players, current_speaker=player.player_id)
-            print_clue(
-                player_id=player.player_id,
-                role=player.role,
-                model=player.model_name,
-                clue=response.clue,
-                thinking=response.thinking,
-                word_hypothesis=response.word_hypothesis,
-                pause_time=4.0  # 4 seconds to read each clue
-            )
+            # Emit event for streaming
+            if self.event_callback:
+                await self.event_callback({
+                    'type': 'clue',
+                    'round': self.current_round,
+                    'player_id': player.player_id,
+                    'player_model': player.model_name,
+                    'role': player.role.value,
+                    'clue': response.clue,
+                    'thinking': response.thinking,
+                    'confidence': response.confidence,
+                    'word_hypothesis': response.word_hypothesis
+                })
+
+            # Visual display (CLI only)
+            if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                print_player_circle(self.players, current_speaker=player.player_id)
+                print_clue(
+                    player_id=player.player_id,
+                    role=player.role,
+                    model=player.model_name,
+                    clue=response.clue,
+                    thinking=response.thinking,
+                    word_hypothesis=response.word_hypothesis,
+                    pause_time=4.0
+                )
 
     async def _execute_discussion_phase(self):
         """Optional discussion phase (not implemented in MVP)"""
@@ -327,10 +427,10 @@ class GameEngine:
         pass
 
     async def _execute_voting(self):
-        """All players vote for suspected imposters with visual display"""
+        """All players vote for suspected imposters"""
 
-        # Show voting header
-        print_voting_header()
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print_voting_header()
 
         # Prepare voting requests
         requests = []
@@ -342,19 +442,22 @@ class GameEngine:
             requests.append({
                 "messages": messages,
                 "model": get_model_id(player.model_name),
-                "temperature": 0.5  # Lower temp for voting (more analytical)
+                "temperature": 0.5
             })
 
-        # Call all AIs in parallel (behind the scenes)
-        print(f"\n{Colors.DIM}🤖 All players analyzing {len(self.all_clues)} clues...{Colors.RESET}")
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"\n{Colors.DIM}🤖 All players analyzing {len(self.all_clues)} clues...{Colors.RESET}")
+
         responses = await self.openrouter.batch_call(
             requests,
             response_format=VoteResponse
         )
-        print(f"{Colors.SUCCESS}✓ Votes received{Colors.RESET}\n")
-        pause(1.0)
 
-        # Display votes ONE AT A TIME
+        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+            print(f"{Colors.SUCCESS}✓ Votes received{Colors.RESET}\n")
+            pause(1.0)
+
+        # Process votes
         for player, response in zip(self.players, responses):
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} voting failed: {response}")
@@ -365,24 +468,49 @@ class GameEngine:
                     reasoning_per_player={}
                 )
 
-            self.all_votes.append(VoteRecord(
+            vote_record = VoteRecord(
                 player_id=player.player_id,
                 voted_for=response.votes,
                 reasoning=response.reasoning_per_player,
                 thinking=response.thinking,
                 confidence=response.confidence
-            ))
-
+            )
+            self.all_votes.append(vote_record)
             player.record_vote(response)
 
-            # VISUAL DISPLAY with pause
-            print_vote(
-                player_id=player.player_id,
-                votes=response.votes,
-                thinking=response.thinking,
-                reasoning=response.reasoning_per_player,
-                pause_time=3.0  # 3 seconds per vote
-            )
+            # Emit event for streaming
+            if self.event_callback:
+                await self.event_callback({
+                    'type': 'vote',
+                    'player_id': player.player_id,
+                    'votes': response.votes,
+                    'thinking': response.thinking,
+                    'reasoning': response.reasoning_per_player,
+                    'confidence': response.confidence
+                })
+
+            # Visual display (CLI only)
+            if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                print_vote(
+                    player_id=player.player_id,
+                    votes=response.votes,
+                    thinking=response.thinking,
+                    reasoning=response.reasoning_per_player,
+                    pause_time=3.0
+                )
+
+    def _check_win_condition(self):
+        """Check if game should end based on eliminations"""
+        all_imposters = [p.player_id for p in self.players if p.role == PlayerRole.IMPOSTER]
+        remaining_players = [p.player_id for p in self.players if p.player_id not in self.eliminated_players]
+        num_civilians = len([p for p in self.players if p.role == PlayerRole.NON_IMPOSTER])
+
+        return check_win_condition(
+            eliminated_players=self.eliminated_players,
+            all_imposters=all_imposters,
+            remaining_players=remaining_players,
+            num_civilians=num_civilians
+        )
 
     def _get_clue_dicts(self) -> List[Dict]:
         """Convert clue records to simple dicts for context"""
@@ -412,17 +540,22 @@ class GameEngine:
             for suspect in vote_record.voted_for:
                 vote_counts[suspect] += 1
 
-        # Top voted players (eliminate top N)
-        sorted_suspects = sorted(
-            vote_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        # Top voted players with tie handling
+        if vote_counts:
+            max_votes = max(vote_counts.values())
+            tied_players = [p for p, v in vote_counts.items() if v == max_votes]
 
-        eliminated = [
-            player_id
-            for player_id, count in sorted_suspects[:self.config.num_imposters]
-        ]
+            if len(tied_players) > 1:
+                # Tie! Use tie-breaking
+                eliminated_by_vote = [resolve_vote_tie(tied_players)]
+                logger.info(f"Vote tie between {tied_players}, eliminated: {eliminated_by_vote}")
+            else:
+                eliminated_by_vote = [tied_players[0]]
+        else:
+            eliminated_by_vote = []
+
+        # Combine with instant eliminations
+        all_eliminated = list(set(self.eliminated_players + eliminated_by_vote))
 
         # Actual imposters
         actual_imposters = [
@@ -432,15 +565,23 @@ class GameEngine:
         ]
 
         # Calculate accuracy
-        correctly_identified = set(eliminated) & set(actual_imposters)
-        accuracy = len(correctly_identified) / len(actual_imposters)
+        correctly_identified = set(all_eliminated) & set(actual_imposters)
+        accuracy = len(correctly_identified) / len(actual_imposters) if actual_imposters else 0
+
+        # Determine winner
+        win_check = check_win_condition(
+            eliminated_players=all_eliminated,
+            all_imposters=actual_imposters,
+            remaining_players=[p.player_id for p in self.players if p.player_id not in all_eliminated],
+            num_civilians=len([p for p in self.players if p.role == PlayerRole.NON_IMPOSTER])
+        )
 
         # Create result
         result = GameResult(
             word=self.config.word,
             category=self.config.category,
             actual_imposters=actual_imposters,
-            eliminated_players=eliminated,
+            eliminated_players=all_eliminated,
             detection_accuracy=accuracy,
             total_rounds=self.current_round,
             all_clues=self.all_clues,
@@ -450,12 +591,17 @@ class GameEngine:
         # Log results
         logger.info(f"\nSecret Word: {self.config.word}")
         logger.info(f"Actual Imposters: {actual_imposters}")
-        logger.info(f"Players Voted Out: {eliminated}")
+        logger.info(f"All Eliminated: {all_eliminated}")
         logger.info(f"Correctly Identified: {list(correctly_identified)}")
         logger.info(f"Detection Accuracy: {accuracy * 100:.1f}%")
 
-        if accuracy == 1.0:
-            logger.info("🎉 PERFECT! All imposters caught!")
+        # Announce winner
+        if win_check.winner == 'civilians':
+            logger.info("🎉 CIVILIANS WIN! All imposters eliminated!")
+        elif win_check.winner == 'imposters':
+            logger.info("🎭 IMPOSTERS WIN! They survived or outnumbered civilians!")
+        elif accuracy == 1.0:
+            logger.info("🎉 PERFECT DETECTION! All imposters caught!")
         elif accuracy > 0.5:
             logger.info("✓ Good detective work!")
         else:

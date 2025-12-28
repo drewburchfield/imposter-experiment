@@ -14,15 +14,12 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv
 
 # Add src to path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
-
-# Import from src package
-import sys
-import importlib.util
 
 # Import modules directly
 from src.game_engine.engine import GameEngine, GameConfig
@@ -98,8 +95,8 @@ async def run_cli_game(
     # Initialize OpenRouter client
     client = OpenRouterClient()
 
-    # Create and run game
-    engine = GameEngine(config, client)
+    # Create and run game with visual mode enabled
+    engine = GameEngine(config, client, visual_mode=True)
 
     try:
         result = await engine.run_game()
