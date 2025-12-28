@@ -1,219 +1,286 @@
-# 🎭 The Imposter Mystery - Statistics Explorer
+# 🎭 The Imposter Experiment
 
-An interactive web-based learning tool for teaching probability and statistics through the real-world "Jen scenario" - where one player was selected as imposter 2 out of 3 times in a social deduction game.
+An educational platform for teaching probability, statistics, and AI behavior through social deduction games. Combines statistical modeling with live AI gameplay simulation.
 
-## 🎯 Educational Goals
+## 🎯 Project Overview
 
-This tool teaches high school students:
+**The Imposter Experiment** features two complementary tools:
 
-1. **Probability Fundamentals**
-   - Basic probability calculations (fractions like 3/17)
-   - Compound probability (multiple events)
-   - Independent events and multiplication
+### 📊 Statistical Modeling Page (`index.html`)
+Interactive probability simulator demonstrating the Law of Large Numbers through the "Jen scenario" - analyzing whether getting selected as imposter 2 out of 3 times is luck or random chance.
 
-2. **Statistical Concepts**
-   - Law of Large Numbers (convergence)
-   - Expected vs. actual outcomes
-   - Distribution patterns
-   - Statistical variation
+**Key Features:**
+- Monte Carlo simulation of player selection (thousands of trials)
+- Visual convergence to theoretical probability (1.61%)
+- Interactive histogram showing distribution patterns
+- Educational tool for high school statistics
 
-3. **Experimental Design**
-   - Why we run multiple trials
-   - How simulations validate theory
-   - The role of sample size in accuracy
+### 🤖 AI Game Simulation (`ai_game_simulation/`)
+Watch independent AI agents play the actual imposter game with real-time observation of their strategic reasoning.
+
+**Key Features:**
+- Multiple LLM models playing simultaneously (Llama, Claude, Gemini, GPT-4)
+- Real-time event streaming via Server-Sent Events (SSE)
+- Observable "inner monologue" showing AI reasoning
+- CLI and web-based interfaces
+
+---
 
 ## 🚀 Quick Start
 
-1. **Open the tool**: Simply open `index.html` in any modern web browser
-2. **Watch the story**: See what happened to Jen across 3 game rounds
-3. **Run simulations**: Try different run counts (10, 100, 1,000, 10,000)
-4. **Discover patterns**: Watch how results converge toward theoretical probability
+### Statistical Modeling Page
 
-## 📊 The Jen Scenario
+```bash
+# No build required - open directly in browser
+open index.html
+
+# Or serve with any static server
+python -m http.server 8000
+# Then visit http://localhost:8000
+```
+
+**Usage:**
+1. Watch the animated Jen scenario (3 rounds)
+2. Run simulations: 10, 100, 1,000, or 10,000 trials
+3. Observe convergence to theoretical probability (1.61%)
+4. Experiment with custom game settings
+
+### AI Game Simulation
+
+**Backend Setup:**
+```bash
+cd ai_game_simulation
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Configure API key
+cp .env.example .env
+# Edit .env and add your OPENROUTER_API_KEY
+```
+
+**Run CLI Demo:**
+```bash
+python cli_game.py --word beach --category nature --players 6 --imposters 2 --rounds 3
+```
+
+**Run with Mixed Models:**
+```bash
+python cli_game.py --word ocean --category nature --players 6 --imposters 2 --models llama,llama,haiku,haiku,gemini,gpt4-mini
+```
+
+**Web Interface:**
+```bash
+# Terminal 1: Start backend
+cd ai_game_simulation/src/api
+uvicorn main:app --reload --port 8000
+
+# Terminal 2: Start frontend
+cd ai_game_simulation/frontend
+npm install
+npm run dev
+```
+
+Then visit `http://localhost:5173`
+
+---
+
+## 📊 The Jen Scenario (Statistical Modeling)
 
 **What Happened:**
-- Round 1: 3 imposters out of 17 players → Jen was selected ✓
-- Round 2: 3 imposters out of 17 players → Jen was NOT selected ○
-- Round 3: 2 imposters out of 18 players → Jen was selected ✓
+- Round 1: 3 imposters out of 17 players → Jen selected ✓
+- Round 2: 3 imposters out of 17 players → Jen NOT selected ○
+- Round 3: 2 imposters out of 18 players → Jen selected ✓
 
 **The Question:** Is getting imposter 2 out of 3 times lucky, unlucky, or just random?
 
 **The Math:**
-- Probability: 1.61% (or 1 in 62)
-- Formula: (3/17) × (14/17) × (2/18) × 3 = 0.0161
+- **Probability: 1.61%** (or 1 in 62)
+- Formula: `(3/17) × (14/17) × (2/18) × 3 = 0.0161`
 
-## 🎓 How to Use This Tool
+### Educational Goals
 
-### For Students
+Students learn:
+1. **Probability Fundamentals** - Basic calculations, compound probability, independent events
+2. **Statistical Concepts** - Law of Large Numbers, expected vs actual outcomes, distributions
+3. **Experimental Design** - Why we run multiple trials, role of sample size
 
-**Discovery Learning Path:**
+### Discovery Learning Path
 
-1. **Start Small (10 simulations)**
-   - Notice how results vary wildly
-   - Might see 0%, 20%, or even 30%
-   - This is normal! Small samples are unpredictable
+1. **Small samples (10 runs)** → Results vary wildly (0%-30%)
+2. **Medium samples (100 runs)** → Convergence begins
+3. **Large samples (1,000-10,000 runs)** → Results stabilize near 1.61%
 
-2. **Scale Up (100 simulations)**
-   - Results start getting closer to theory
-   - Still some variation, but converging
-   - Pattern becomes clearer
+---
 
-3. **Go Big (1,000-10,000 simulations)**
-   - Results very close to 1.61%
-   - Distribution clearly visible
-   - Law of Large Numbers in action!
+## 🤖 AI Game Simulation
 
-4. **Experiment**
-   - Change the game settings
-   - Try different player/imposter counts
-   - See how probabilities change
+Watch AI agents play social deduction game with real strategic reasoning.
 
-### For Educators
+### How It Works
 
-**Recommended Lesson Flow:**
+**Game Flow:**
+1. **Setup**: Players assigned roles (regular vs imposter)
+2. **Clue Rounds**: Players give clues about secret word
+   - Regular players know the word
+   - Imposters must guess and fake it
+3. **Voting**: Players vote to eliminate suspects
+4. **Results**: Did the group catch the imposters?
 
-1. **Hook (5 minutes)**
-   - Show the intro screen
-   - Tell the Jen story
-   - Ask: "Lucky or unlucky?"
+**AI Architecture:**
+- Each player is independent LLM agent with own context
+- Structured JSON output via Pydantic schemas
+- Event-driven design with SSE streaming
+- Observable "thinking" shows AI reasoning process
 
-2. **Exploration (15 minutes)**
-   - Students run 10 simulations
-   - Discuss variable results
-   - Run 100, then 1,000
-   - Observe convergence
+### Supported AI Models
 
-3. **Concepts (10 minutes)**
-   - Click "Learn More" buttons
-   - Discuss Law of Large Numbers
-   - Explain theoretical calculation
+- **Llama 3.1 8B** - Fast, cost-effective, good quality
+- **Claude 3.5 Haiku** - Premium reasoning, best strategic play
+- **Gemini Flash 1.5** - Creative, fast responses
+- **GPT-4o Mini** - OpenAI option
+- **Mistral 7B** - Alternative budget model
 
-4. **Extension (Optional)**
-   - Custom scenarios
-   - Compare different setups
-   - Calculate other probabilities
+### Use Cases
 
-## 💡 Key Learning Moments
+- **Educational**: Demonstrate AI reasoning and decision-making
+- **Research**: Compare LLM performance on social deduction
+- **Entertainment**: Watch AI agents develop strategies
 
-### Moment 1: "Why are my results so different?"
+---
 
-**With 10 simulations:** Results vary dramatically
-- **Teaching point:** Small samples don't represent true probability
-- **Analogy:** Flipping a coin 10 times might give 7 heads - doesn't mean it's unfair
+## 🔧 Technical Architecture
 
-### Moment 2: "It's getting closer to 1.61%!"
+### Statistical Modeling Page
+- **Single HTML file** with vanilla JavaScript
+- **Fisher-Yates shuffle** for random selection
+- **Chart.js** for visualization
+- **No build process** - runs in any browser
 
-**With 1,000+ simulations:** Results converge
-- **Teaching point:** Law of Large Numbers
-- **Real-world:** Why polls need large samples, why casinos always win
+### AI Game Simulation
 
-### Moment 3: "The distribution looks like a curve"
+**Backend** (Python/FastAPI):
+- `game_engine/` - State machine, turn coordination
+- `ai/` - OpenRouter API client, multiple LLM support
+- `api/` - REST + SSE endpoints
+- `utils/` - CLI display, logging
 
-**Histogram pattern:** Most results near middle, fewer at extremes
-- **Teaching point:** Normal distribution basics
-- **Extension:** Binomial distribution (for advanced students)
+**Frontend** (React/TypeScript):
+- Event-driven UI (state derived from SSE stream)
+- Components: PlayerCircle, InnerMonologue, ClueDisplay, GameControls
+- Real-time observation of AI reasoning
 
-## 🔧 Technical Features
+**Data Flow:**
+```
+GameEngine → Events → SSE Stream → Frontend → Derived State → UI
+```
 
-### Performance
-- Runs 10,000 simulations in < 500ms
-- Live progress updates every 1% of completion
-- Non-blocking UI (stays responsive)
-- Optimized with Fisher-Yates shuffle algorithm
-
-### Visualizations
-- **Animated Story**: Watch the 3 rounds play out
-- **Progress Bar**: Real-time simulation tracking
-- **Distribution Histogram**: See patterns emerge
-- **Theory vs Reality Cards**: Compare predictions to results
-- **Text Breakdown**: Detailed percentage breakdown
-
-### User Controls
-- **Preset Buttons**: Quick access (10, 100, 500, 1K, 10K runs)
-- **Custom Input**: Any count from 1 to 100,000
-- **Game Settings**: Adjust players and imposters per round
-- **Reset Button**: Return to Jen scenario
-
-## 📱 Compatibility
-
-**Browsers:**
-- ✅ Chrome (latest)
-- ✅ Firefox (latest)
-- ✅ Safari (latest)
-- ✅ Edge (latest)
-- ✅ Mobile browsers (iOS/Android)
-
-**Requirements:**
-- Modern web browser with JavaScript enabled
-- Internet connection (for Chart.js CDN on first load)
-- No installation or build process needed
-
-## 🎨 Color Coding
-
-- **Teal (#4ECDC4)**: Primary actions and default bars
-- **Coral (#FF6B6B)**: Jen's selections and highlights
-- **Yellow (#FFE66D)**: Discovery moments and accents
+---
 
 ## 📐 The Mathematics
 
-### Theoretical Probability Calculation
+### Binomial Probability (Statistical Modeling)
 
-For getting selected exactly 2 times out of 3 rounds:
+For selecting exactly 2 imposters across 3 rounds:
 
 ```
-P(X=2) = P(selected in rounds 1,2 only) +
-         P(selected in rounds 1,3 only) +
-         P(selected in rounds 2,3 only)
+P(X=2) = P(1,2 only) + P(1,3 only) + P(2,3 only)
 
-Round 1: p₁ = 3/17 = 0.176
-Round 2: p₂ = 3/17 = 0.176
-Round 3: p₃ = 2/18 = 0.111
+Round probabilities:
+- p₁ = 3/17 = 0.176
+- p₂ = 3/17 = 0.176
+- p₃ = 2/18 = 0.111
 
-P(X=2) = [p₁ × p₂ × (1-p₃)] +
-         [p₁ × (1-p₂) × p₃] +
-         [(1-p₁) × p₂ × p₃]
-
-       = [0.176 × 0.176 × 0.889] +
+P(X=2) = [0.176 × 0.176 × 0.889] +
          [0.176 × 0.824 × 0.111] +
          [0.824 × 0.176 × 0.111]
-
-       = 0.0275 + 0.0161 + 0.0161
        = 0.0161 (1.61%)
 ```
 
-### Why This Works
+**Why this works:**
+- Each round is **independent**
+- Use **multiplication** for "AND" events
+- Use **addition** for "OR" events (different scenarios)
 
-- Each round is **independent** (previous rounds don't affect future ones)
-- We use **multiplication** for "AND" events (both Round 1 AND Round 2)
-- We use **addition** for "OR" events (scenario 1 OR scenario 2 OR scenario 3)
-- This is the **binomial distribution** formula for n=3, k=2, with varying p
+---
 
-## 🚀 Next Steps (Phase 2)
+## 🎓 Educational Use
 
-After mastering Phase 1 (statistical validation), students can explore:
+### For Students (Statistical Modeling)
 
-- **Phase 2: Full Gameplay Simulation**
-  - AI agents playing the actual game
-  - OpenRouter-powered decision making
-  - Realistic imposter detection strategies
-  - Natural language clue generation
+**Recommended path:**
+1. Start with 10 simulations → notice wild variation
+2. Scale to 100 → see convergence begin
+3. Try 1,000-10,000 → Law of Large Numbers in action
+4. Experiment with custom settings
+
+**Key insights:**
+- Small samples are unreliable
+- Large samples converge to theory
+- Distribution patterns emerge naturally
+
+### For Educators (AI Simulation)
+
+**Demonstration ideas:**
+- Compare reasoning across different AI models
+- Discuss strategic vs random decision-making
+- Explore how AI agents build "theory of mind"
+- Analyze clue quality and detection strategies
+
+---
+
+## 🛠️ Development
+
+### Environment Variables
+
+Create `ai_game_simulation/.env`:
+```
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+DATABASE_PATH=./data/games.db
+DEFAULT_MODEL=meta-llama/llama-3.1-8b-instruct
+LOG_LEVEL=INFO
+```
+
+### Testing
+
+**Statistical Modeling:** Manual browser testing
+
+**AI Simulation:**
+- **CLI testing**: `python cli_game.py` for quick validation
+- **API testing**: Monitor SSE streams at `/api/game/{id}/stream`
+- **Model testing**: Compare different LLM combinations
+
+### Building for Production
+
+```bash
+# Frontend
+cd ai_game_simulation/frontend
+npm run build
+
+# Backend serves static files from dist/
+cd ai_game_simulation/src/api
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+---
 
 ## 📝 Credits
 
-**Created for:** High school statistics education
-**Concepts:** Probability, Law of Large Numbers, Binomial Distribution
-**Visualization:** Chart.js v4.4.0
-**Inspired by:** Real gaming experience and statistical curiosity
+**Created for:** Statistics education and AI research
+**Concepts:** Probability, Law of Large Numbers, AI reasoning, social deduction
+**Technologies:** FastAPI, React, OpenRouter API, Chart.js
+**Inspired by:** Real gaming experiences and statistical curiosity
+
+---
 
 ## 🤝 Contributing
 
-This is an educational tool. Improvements welcome:
-
-- Additional "Learn More" content
-- More preset scenarios
+Improvements welcome:
+- Additional educational content
+- New preset scenarios
 - Accessibility enhancements
-- Mobile UX improvements
-- Translation to other languages
+- UI/UX improvements
+- Additional AI model integrations
 
 ## 📄 License
 
@@ -221,6 +288,6 @@ Free for educational use. Share with students, teachers, and learners!
 
 ---
 
-**Remember:** The goal isn't just to show *that* simulations work - it's to help students *discover* the Law of Large Numbers through hands-on experimentation. Let them be surprised by the convergence!
+**Remember:** This isn't just about showing *that* probability works or *that* AI can reason - it's about helping people *discover* these concepts through hands-on experimentation!
 
 🎲 Happy exploring! 🎭

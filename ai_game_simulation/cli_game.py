@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI Interface for Phase 2: AI Imposter Game
+CLI Interface for AI Imposter Game Simulation
 
 Run AI-powered imposter games from the command line.
 This is the MVP - proves the concept before building the visual UI.

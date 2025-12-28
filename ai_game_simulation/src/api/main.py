@@ -1,5 +1,5 @@
 """
-FastAPI backend for Phase 2 - AI Imposter Game
+FastAPI backend for AI Imposter Game Simulation
 Provides REST API and Server-Sent Events (SSE) streaming for real-time game observation.
 """
 
@@ -16,6 +16,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 

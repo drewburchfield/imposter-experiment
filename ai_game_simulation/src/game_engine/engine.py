@@ -330,8 +330,8 @@ class GameEngine:
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} API call failed: {response}")
                 response = ClueResponse(
-                    thinking="[API ERROR - Could not get response]",
-                    clue="...",
+                    thinking="[API_ERROR] Language model failed to generate clue response. Using fallback generic clue.",
+                    clue="uncertain",
                     confidence=0
                 )
 
@@ -462,7 +462,7 @@ class GameEngine:
             if isinstance(response, Exception):
                 logger.error(f"{player.player_id} voting failed: {response}")
                 response = VoteResponse(
-                    thinking="[API ERROR]",
+                    thinking="[API_ERROR] Language model failed to generate valid voting response. Using empty vote as fallback to continue game.",
                     votes=[],
                     confidence=0,
                     reasoning_per_player={}
