@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Player } from '../types/game';
+import type { Player } from '../types/game';
 import './PlayerCircle.css';
 
 interface PlayerCircleProps {

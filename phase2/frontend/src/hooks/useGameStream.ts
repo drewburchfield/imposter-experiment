@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { GameEvent } from '../types/game';
+import type { GameEvent } from '../types/game';
 
 interface UseGameStreamResult {
   events: GameEvent[];
@@ -23,7 +23,7 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const playbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Connect to SSE stream
   useEffect(() => {

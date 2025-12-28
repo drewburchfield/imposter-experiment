@@ -3,10 +3,7 @@
  * Matches backend Pydantic models.
  */
 
-export enum PlayerRole {
-  IMPOSTER = 'imposter',
-  NON_IMPOSTER = 'non_imposter'
-}
+export type PlayerRole = 'imposter' | 'non_imposter';
 
 export interface Player {
   id: string;

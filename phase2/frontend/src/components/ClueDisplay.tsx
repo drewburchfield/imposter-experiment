@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { ClueEvent } from '../types/game';
+import type { ClueEvent } from '../types/game';
 import './ClueDisplay.css';
 
 interface ClueDisplayProps {

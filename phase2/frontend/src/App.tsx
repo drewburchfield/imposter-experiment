@@ -9,12 +9,11 @@ import { InnerMonologue } from './components/InnerMonologue';
 import { GameControls } from './components/GameControls';
 import { ClueDisplay } from './components/ClueDisplay';
 import { useGameStream } from './hooks/useGameStream';
-import { Player, ClueEvent, GameEvent } from './types/game';
+import type { Player, ClueEvent } from './types/game';
 import './App.css';
 
 function App() {
   const [gameId, setGameId] = useState<string | null>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
 
   // Game configuration
@@ -26,15 +25,21 @@ function App() {
     num_rounds: 2
   });
 
-  const { events, isPlaying, speed, setSpeed, togglePlay, currentEventIndex } = useGameStream(gameId);
+  const { events, isPlaying, speed, setSpeed, togglePlay } = useGameStream(gameId);
 
   // Derive game state from events
-  const gameState = useMemo(() => {
+  const gameState: {
+    players: Player[];
+    clues: ClueEvent[];
+    currentRound: number;
+    currentSpeaker: string | undefined;
+    result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null;
+  } = useMemo(() => {
     const players: Player[] = [];
     const clues: ClueEvent[] = [];
     let currentRound = 0;
     let currentSpeaker: string | undefined;
-    let result = null;
+    let result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null = null;
 
     events.forEach(event => {
       switch (event.type) {
@@ -85,7 +90,7 @@ function App() {
         }
         return null;
       })
-      .filter(Boolean) as any[];
+      .filter((t): t is NonNullable<typeof t> => t !== null);
   }, [events]);
 
   const startGame = async () => {
@@ -201,7 +206,6 @@ function App() {
             <div className="right-panel">
               <InnerMonologue
                 thoughts={thoughts}
-                currentPlayer={selectedPlayer || undefined}
               />
             </div>
           </div>
