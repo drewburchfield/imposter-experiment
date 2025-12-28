@@ -12,13 +12,17 @@ from collections import defaultdict
 
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
+from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
+
+logger = logging.getLogger(__name__)
+
+# Import OpenRouter client (SDK preferred)
 try:
     from ..ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient, get_model_id
     logger.info("Using OpenRouter SDK client")
 except ImportError:
     from ..ai.openrouter import OpenRouterClient, get_model_id
     logger.info("Using legacy OpenRouter client")
-from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
 # Optional CLI display (only import if available)
 try:
@@ -34,8 +38,6 @@ try:
     CLI_DISPLAY_AVAILABLE = True
 except ImportError:
     CLI_DISPLAY_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
 
 
 class GamePhase(Enum):
