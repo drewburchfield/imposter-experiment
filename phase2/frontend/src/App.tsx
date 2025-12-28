@@ -95,7 +95,7 @@ function App() {
 
   const startGame = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/game/create', {
+      const response = await fetch('http://localhost:9000/api/game/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)

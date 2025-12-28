@@ -30,7 +30,7 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     if (!gameId) return;
 
     const eventSource = new EventSource(
-      `http://localhost:8000/api/game/${gameId}/stream`
+      `http://localhost:9000/api/game/${gameId}/stream`
     );
 
     eventSource.onmessage = (event) => {
