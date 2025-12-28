@@ -12,7 +12,12 @@ from collections import defaultdict
 
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
-from ..ai.openrouter import OpenRouterClient, get_model_id
+try:
+    from ..ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient, get_model_id
+    logger.info("Using OpenRouter SDK client")
+except ImportError:
+    from ..ai.openrouter import OpenRouterClient, get_model_id
+    logger.info("Using legacy OpenRouter client")
 from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
 # Optional CLI display (only import if available)

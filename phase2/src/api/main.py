@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 from ..game_engine.engine import GameEngine, GameConfig, GameResult
 from ..game_engine.history import GameHistory, init_database
-from ..ai.openrouter import OpenRouterClient
+from ..ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient
 
 # Initialize app
 app = FastAPI(
