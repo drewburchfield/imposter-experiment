@@ -13,6 +13,7 @@ from collections import defaultdict
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
 from ..ai.openrouter import OpenRouterClient, get_model_id
+from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
 # Optional CLI display (only import if available)
 try:
@@ -131,9 +132,14 @@ class GameEngine:
         # Game history
         self.all_clues: List[ClueRecord] = []
         self.all_votes: List[VoteRecord] = []
+        self.eliminated_players: List[str] = []
 
         # Event callback for streaming
         self.event_callback = None
+
+        # Game state
+        self.game_ended_early = False
+        self.early_end_reason = None
 
         logger.info(f"GameEngine created: {config.num_players} players, "
                    f"{config.num_imposters} imposters, word='{config.word}'")
@@ -225,10 +231,10 @@ class GameEngine:
 
     async def run_game(self) -> GameResult:
         """
-        Main game loop: Run all rounds, then voting, then results.
+        Main game loop with validation and win condition checking.
 
         Returns:
-            GameResult with complete game history
+            GameResult with complete game history and winner
         """
         await self.initialize_game()
 
@@ -243,18 +249,29 @@ class GameEngine:
 
             await self._execute_clue_round()
 
+            # Check if game ended early (word revealed, instant elimination, etc.)
+            if self.game_ended_early:
+                break
+
+            # Check win condition after instant reveals
+            win_check = self._check_win_condition()
+            if win_check.game_over:
+                logger.info(f"Game over: {win_check.reason}")
+                break
+
             # Optional discussion phase
             if self.config.enable_discussion:
                 self.phase = GamePhase.DISCUSSION
                 await self._execute_discussion_phase()
 
-        # Voting phase
-        self.phase = GamePhase.VOTING
-        logger.info(f"\n{'='*60}")
-        logger.info("VOTING PHASE")
-        logger.info(f"{'='*60}")
+        # Voting phase (if game hasn't ended early)
+        if not self.game_ended_early:
+            self.phase = GamePhase.VOTING
+            logger.info(f"\n{'='*60}")
+            logger.info("VOTING PHASE")
+            logger.info(f"{'='*60}")
 
-        await self._execute_voting()
+            await self._execute_voting()
 
         # Calculate results
         self.phase = GamePhase.REVEAL
@@ -313,7 +330,50 @@ class GameEngine:
                     confidence=0
                 )
 
-            # Record clue
+            # VALIDATE CLUE
+            validation = validate_clue(
+                clue=response.clue,
+                secret_word=self.config.word,
+                player_id=player.player_id,
+                role=player.role
+            )
+
+            # Handle validation result
+            if not validation.valid:
+                # Emit validation failure event
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'validation_error',
+                        'player_id': player.player_id,
+                        'clue': response.clue,
+                        'reason': validation.reason,
+                        'message': validation.message
+                    })
+
+                # Instant reveal for imposters saying the word
+                if validation.instant_reveal:
+                    self.eliminated_players.append(player.player_id)
+
+                    if self.event_callback:
+                        await self.event_callback({
+                            'type': 'instant_reveal',
+                            'player_id': player.player_id,
+                            'role': player.role.value,
+                            'reason': 'said_secret_word'
+                        })
+
+                    logger.warning(validation.message)
+
+                # Game over for non-imposters saying word
+                if validation.game_over:
+                    self.game_ended_early = True
+                    self.early_end_reason = validation.message
+                    return
+
+                # Skip recording invalid clue
+                continue
+
+            # Record valid clue
             clue_record = ClueRecord(
                 round=self.current_round,
                 player_id=player.player_id,
@@ -432,6 +492,19 @@ class GameEngine:
                     pause_time=3.0
                 )
 
+    def _check_win_condition(self):
+        """Check if game should end based on eliminations"""
+        all_imposters = [p.player_id for p in self.players if p.role == PlayerRole.IMPOSTER]
+        remaining_players = [p.player_id for p in self.players if p.player_id not in self.eliminated_players]
+        num_civilians = len([p for p in self.players if p.role == PlayerRole.NON_IMPOSTER])
+
+        return check_win_condition(
+            eliminated_players=self.eliminated_players,
+            all_imposters=all_imposters,
+            remaining_players=remaining_players,
+            num_civilians=num_civilians
+        )
+
     def _get_clue_dicts(self) -> List[Dict]:
         """Convert clue records to simple dicts for context"""
         return [
@@ -460,17 +533,22 @@ class GameEngine:
             for suspect in vote_record.voted_for:
                 vote_counts[suspect] += 1
 
-        # Top voted players (eliminate top N)
-        sorted_suspects = sorted(
-            vote_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        # Top voted players with tie handling
+        if vote_counts:
+            max_votes = max(vote_counts.values())
+            tied_players = [p for p, v in vote_counts.items() if v == max_votes]
 
-        eliminated = [
-            player_id
-            for player_id, count in sorted_suspects[:self.config.num_imposters]
-        ]
+            if len(tied_players) > 1:
+                # Tie! Use tie-breaking
+                eliminated_by_vote = [resolve_vote_tie(tied_players)]
+                logger.info(f"Vote tie between {tied_players}, eliminated: {eliminated_by_vote}")
+            else:
+                eliminated_by_vote = [tied_players[0]]
+        else:
+            eliminated_by_vote = []
+
+        # Combine with instant eliminations
+        all_eliminated = list(set(self.eliminated_players + eliminated_by_vote))
 
         # Actual imposters
         actual_imposters = [
@@ -480,15 +558,23 @@ class GameEngine:
         ]
 
         # Calculate accuracy
-        correctly_identified = set(eliminated) & set(actual_imposters)
-        accuracy = len(correctly_identified) / len(actual_imposters)
+        correctly_identified = set(all_eliminated) & set(actual_imposters)
+        accuracy = len(correctly_identified) / len(actual_imposters) if actual_imposters else 0
+
+        # Determine winner
+        win_check = check_win_condition(
+            eliminated_players=all_eliminated,
+            all_imposters=actual_imposters,
+            remaining_players=[p.player_id for p in self.players if p.player_id not in all_eliminated],
+            num_civilians=len([p for p in self.players if p.role == PlayerRole.NON_IMPOSTER])
+        )
 
         # Create result
         result = GameResult(
             word=self.config.word,
             category=self.config.category,
             actual_imposters=actual_imposters,
-            eliminated_players=eliminated,
+            eliminated_players=all_eliminated,
             detection_accuracy=accuracy,
             total_rounds=self.current_round,
             all_clues=self.all_clues,
@@ -498,12 +584,17 @@ class GameEngine:
         # Log results
         logger.info(f"\nSecret Word: {self.config.word}")
         logger.info(f"Actual Imposters: {actual_imposters}")
-        logger.info(f"Players Voted Out: {eliminated}")
+        logger.info(f"All Eliminated: {all_eliminated}")
         logger.info(f"Correctly Identified: {list(correctly_identified)}")
         logger.info(f"Detection Accuracy: {accuracy * 100:.1f}%")
 
-        if accuracy == 1.0:
-            logger.info("🎉 PERFECT! All imposters caught!")
+        # Announce winner
+        if win_check.winner == 'civilians':
+            logger.info("🎉 CIVILIANS WIN! All imposters eliminated!")
+        elif win_check.winner == 'imposters':
+            logger.info("🎭 IMPOSTERS WIN! They survived or outnumbered civilians!")
+        elif accuracy == 1.0:
+            logger.info("🎉 PERFECT DETECTION! All imposters caught!")
         elif accuracy > 0.5:
             logger.info("✓ Good detective work!")
         else:
