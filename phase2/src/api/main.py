@@ -7,6 +7,7 @@ import asyncio
 import uuid
 import os
 import logging
+import sqlite3
 from typing import Dict, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse

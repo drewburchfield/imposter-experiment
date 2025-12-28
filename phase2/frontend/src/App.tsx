@@ -3,7 +3,7 @@
  * Real-time observation of AI agents playing social deduction game.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PlayerCircle } from './components/PlayerCircle';
 import { InnerMonologue } from './components/InnerMonologue';
 import { GameControls } from './components/GameControls';
@@ -28,6 +28,14 @@ function App() {
   const { events, isPlaying, speed, setSpeed, togglePlay } = useGameStream(gameId);
 
   // Derive game state from events
+  // Handle game start separately to avoid setState in useMemo
+  useEffect(() => {
+    const hasGameStart = events.some(e => e.type === 'game_start');
+    if (hasGameStart && !gameStarted) {
+      setGameStarted(true);
+    }
+  }, [events, gameStarted]);
+
   const gameState: {
     players: Player[];
     clues: ClueEvent[];
@@ -45,7 +53,7 @@ function App() {
       switch (event.type) {
         case 'game_start':
           players.push(...event.players);
-          setGameStarted(true);
+          // setGameStarted moved to useEffect above
           break;
 
         case 'round_start':
