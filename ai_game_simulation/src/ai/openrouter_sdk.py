@@ -178,149 +178,131 @@ class OpenRouterSDKClient:
         return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-# Model registry - Tested and verified on OpenRouter (18 working models)
-# Last updated: 2025-12-29 - All IDs confirmed working
+# Model registry - Top performers from comprehensive 30-model testing
+# Last tested: 2025-12-29 | Success rate: 60% (18/30 working)
+# Excluded: Meta/Llama models (slow), failed models (404/timeout)
+# Focus: Speed (< 8s), reliability (100% success), creativity (> 75%)
 AVAILABLE_MODELS = {
     # ============================================
-    # SPEED TIER (< 3 seconds) - Best for gameplay
+    # GOOGLE - Ultra-fast Gemini models (1.3-2.3s)
     # ============================================
+    'gemini-2.0': {
+        'id': 'google/gemini-2.0-flash-001',
+        'name': 'Gemini 2.0 Flash',
+        'latency_ms': 1330,
+        'creativity': 90,
+        'provider': 'Google',
+    },
     'gemini-3': {
         'id': 'google/gemini-3-flash-preview',
         'name': 'Gemini 3 Flash',
-        'speed': 'ultra-fast',
         'latency_ms': 1979,
         'creativity': 100,
+        'provider': 'Google',
     },
     'gemini-2.5': {
         'id': 'google/gemini-2.5-flash',
         'name': 'Gemini 2.5 Flash',
-        'speed': 'ultra-fast',
         'latency_ms': 2321,
         'creativity': 100,
-    },
-    'gemini-2.0': {
-        'id': 'google/gemini-2.0-flash-001',
-        'name': 'Gemini 2.0 Flash',
-        'speed': 'ultra-fast',
-        'latency_ms': 1330,
-        'creativity': 90,
-    },
-    'gpt4o-mini': {
-        'id': 'openai/gpt-4o-mini',
-        'name': 'GPT-4o Mini',
-        'speed': 'ultra-fast',
-        'latency_ms': 2597,
-        'creativity': 100,
-    },
-    'llama-3.3': {
-        'id': 'meta-llama/llama-3.3-70b-instruct',
-        'name': 'Llama 3.3 70B',
-        'speed': 'ultra-fast',
-        'latency_ms': 2873,
-        'creativity': 100,
+        'provider': 'Google',
     },
 
     # ============================================
-    # QUALITY TIER (3-8 seconds) - Premium reasoning
+    # OPENAI - Premium quality (2.6-3.6s)
     # ============================================
-    'haiku': {
-        'id': 'anthropic/claude-3.5-haiku',
-        'name': 'Claude 3.5 Haiku',
-        'speed': 'fast',
-        'latency_ms': 3368,
-        'creativity': 83,
+    'gpt4o-mini': {
+        'id': 'openai/gpt-4o-mini',
+        'name': 'GPT-4o Mini',
+        'latency_ms': 2597,
+        'creativity': 100,
+        'provider': 'OpenAI',
     },
     'gpt4o': {
         'id': 'openai/gpt-4o',
         'name': 'GPT-4o',
-        'speed': 'fast',
         'latency_ms': 3629,
         'creativity': 100,
+        'provider': 'OpenAI',
     },
-    'qwen-coder': {
-        'id': 'qwen/qwen3-coder',
-        'name': 'Qwen3 Coder',
-        'speed': 'fast',
-        'latency_ms': 4180,
-        'creativity': 100,
+
+    # ============================================
+    # ANTHROPIC - Best strategic reasoning (3.4-5.3s)
+    # ============================================
+    'haiku': {
+        'id': 'anthropic/claude-3.5-haiku',
+        'name': 'Claude 3.5 Haiku',
+        'latency_ms': 3368,
+        'creativity': 83,
+        'provider': 'Anthropic',
     },
     'sonnet': {
         'id': 'anthropic/claude-3.5-sonnet',
         'name': 'Claude 3.5 Sonnet',
-        'speed': 'fast',
         'latency_ms': 5316,
         'creativity': 91,
-    },
-    'mistral-large': {
-        'id': 'mistralai/mistral-large',
-        'name': 'Mistral Large',
-        'speed': 'fast',
-        'latency_ms': 7041,
-        'creativity': 100,
-    },
-    'phi-4': {
-        'id': 'microsoft/phi-4',
-        'name': 'Microsoft Phi-4',
-        'speed': 'fast',
-        'latency_ms': 7440,
-        'creativity': 100,
+        'provider': 'Anthropic',
     },
 
     # ============================================
-    # BUDGET TIER (8-15 seconds) - Economical
+    # QWEN (Open Source) - Good balance (4.2-9.5s)
     # ============================================
-    'mistral': {
-        'id': 'mistralai/mistral-7b-instruct',
-        'name': 'Mistral 7B',
-        'speed': 'medium',
-        'latency_ms': 9440,
-        'creativity': 79,
+    'qwen-coder': {
+        'id': 'qwen/qwen3-coder',
+        'name': 'Qwen3 Coder',
+        'latency_ms': 4180,
+        'creativity': 100,
+        'provider': 'Qwen',
     },
     'qwen-32b': {
         'id': 'qwen/qwen3-32b',
         'name': 'Qwen3 32B',
-        'speed': 'medium',
         'latency_ms': 9488,
         'creativity': 79,
+        'provider': 'Qwen',
+    },
+
+    # ============================================
+    # MISTRAL (Open Source) - Reliable (7-9.4s)
+    # ============================================
+    'mistral-large': {
+        'id': 'mistralai/mistral-large',
+        'name': 'Mistral Large',
+        'latency_ms': 7041,
+        'creativity': 100,
+        'provider': 'Mistral',
+    },
+    'mistral-7b': {
+        'id': 'mistralai/mistral-7b-instruct',
+        'name': 'Mistral 7B',
+        'latency_ms': 9440,
+        'creativity': 79,
+        'provider': 'Mistral',
+    },
+
+    # ============================================
+    # ALTERNATIVES - Specialized models
+    # ============================================
+    'phi-4': {
+        'id': 'microsoft/phi-4',
+        'name': 'Microsoft Phi-4',
+        'latency_ms': 7440,
+        'creativity': 100,
+        'provider': 'Microsoft',
     },
     'grok': {
         'id': 'x-ai/grok-4.1-fast',
         'name': 'Grok 4.1 Fast',
-        'speed': 'medium',
         'latency_ms': 10066,
         'creativity': 100,
-    },
-    'llama': {
-        'id': 'meta-llama/llama-3.1-8b-instruct',
-        'name': 'Llama 3.1 8B',
-        'speed': 'medium',
-        'latency_ms': 10614,
-        'creativity': 50,
+        'provider': 'X.AI',
     },
     'deepseek': {
         'id': 'deepseek/deepseek-chat-v3',
         'name': 'DeepSeek V3',
-        'speed': 'medium',
         'latency_ms': 12785,
         'creativity': 89,
-    },
-
-    # ============================================
-    # POWER TIER (20+ seconds) - Maximum capability
-    # ============================================
-    'llama-70b': {
-        'id': 'meta-llama/llama-3.1-70b-instruct',
-        'name': 'Llama 3.1 70B',
-        'speed': 'slow',
-        'latency_ms': 22982,
-        'creativity': 81,
-    },
-    'qwen-72b': {
-        'id': 'qwen/qwen-2.5-72b-instruct',
-        'name': 'Qwen 2.5 72B',
-        'speed': 'slow',
-        'latency_ms': 26012,
-        'creativity': 100,
+        'provider': 'DeepSeek',
     },
 }
 

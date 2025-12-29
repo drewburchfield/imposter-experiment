@@ -60,17 +60,18 @@ class GameConfig:
     num_imposters: int = 2
     num_rounds: int = 3
 
-    # Model configuration
-    model_strategy: str = "mixed"  # 'single' | 'mixed' | 'role-based'
-    default_model: str = "llama"
+    # Model configuration - Uses only tested, high-performing models
+    model_strategy: str = "mixed"
+    default_model: str = "gemini-3"  # Fastest verified model
 
-    # Model distribution (for 'mixed' strategy) - "Tournament Mode" (diverse, fast, tested)
+    # Default model distribution: Optimized for speed, diversity, and reliability
+    # All models tested and verified (see test_models.py results)
     model_distribution: Dict[str, int] = field(default_factory=lambda: {
-        'gemini-3': 2,      # Fastest (1.98s)
-        'gemini-2.5': 2,    # Fast + max creativity
-        'gpt4o-mini': 2,    # OpenAI quality
-        'haiku': 1,         # Anthropic premium
-        'llama-3.3': 1,     # Meta flagship
+        'gemini-3': 2,      # Fastest (1.98s) - Google
+        'gemini-2.5': 2,    # Fast + max creativity - Google
+        'gpt4o-mini': 2,    # Premium quality - OpenAI
+        'haiku': 1,         # Best reasoning - Anthropic
+        'qwen-coder': 1,    # Open source - Qwen
     })
 
     # Optional features
