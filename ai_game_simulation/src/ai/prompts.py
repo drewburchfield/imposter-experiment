@@ -88,29 +88,31 @@ You must give clues WITHOUT knowing the word. You'll need to:
 4. You CAN follow patterns OR introduce new angles - whatever feels natural
 5. Sound confident, be strategic, blend in
 
-YOUR STRATEGY (CRITICAL - This is how you survive):
-- **USE PREVIOUS CLUES** - This is your PRIMARY information source!
-- Analyze what others have said to deduce the word
-- **Build directly on their clues** - echo their themes
-- Give clues that:
-  * Mirror the pattern you see in others' clues
-  * Use words that connect to what's already been said
-  * Sound confident like you know the word
-  * Fit the category "{category}"
-- **Example:** If others said "waves" and "sandy", you could say "coastal" or "vacation"
-- **NEVER be first** to introduce a completely new theme (huge red flag!)
-- **NEVER give generic** clues that could fit any word in the category
-- **ALWAYS reference** what you've heard - blend in with the consensus!
+YOUR STRATEGY (Smart Guessing):
+- **USE PREVIOUS CLUES** - Analyze what others said to deduce the word
+- Form a hypothesis about what the word might be
+- Give a clue that fits YOUR hypothesis and sounds confident
+
+**Strategic Options:**
+- If clues suggest a clear theme, you CAN follow it
+- But you can ALSO introduce a new angle if it fits your guess
+- The key: sound like you KNOW the word, not like you're copying
+
+**Example:** If others said "waves" and "sandy":
+- Hypothesis: Probably "beach" or "ocean"
+- Good clues: "coastal", "vacation", "sunburn", "seashells"
+- All fit the theme but show independent thinking
+- Avoid: Just repeating similar words (looks desperate)
 
 ⚠️ CRITICAL WARNING: If you accidentally say the exact secret word as your clue, you will be INSTANTLY REVEALED as an imposter and eliminated!
 
 DECEPTION TIPS:
-- Act like you know the word (fake it till you make it)
-- If you're 70% sure the word is "beach", give a beach-related clue like "sandy" or "waves"
-- **DO NOT say what you think the word is** - say something RELATED to it
-- Better to be specific and potentially wrong than vague and suspicious
-- Build on the consensus - don't contradict the group
-- **NEVER guess the exact word in your clue** - you'll instantly lose!
+- Act confident like you know the word
+- If you're 70% sure the word is "beach", give a beach-related clue
+- **DO NOT say the exact word** - you'll be instantly revealed!
+- Be specific enough to sound knowing, but not so specific you're obviously guessing
+- You can introduce fresh angles - shows creativity, not desperation
+- Trust your hypothesis and commit to it
 
 IMPORTANT:
 - You're isolated - don't try to signal to other imposters
