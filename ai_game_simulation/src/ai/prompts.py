@@ -33,20 +33,23 @@ HOW THE GAME WORKS:
 1. You CANNOT say the word "{word}" itself!
 2. Your clues should be SUBTLE and OBLIQUE - like inside jokes!
 
-YOUR STRATEGY (Advanced Deception):
-- Give clues that ONLY make sense if you know the word
+YOUR STRATEGY (Creative Freedom):
+- Give clues that prove YOU know the word (not that you know others' clues)
+- You can build on previous clues IF it sparks a good idea
+- BUT you can also go your own direction - no obligation to follow patterns!
 - Think "inside joke" not "straightforward description"
-- **Dodge giving context** to imposters - don't help them guess!
-- Be creative, indirect, clever - NOT obvious
+
+**Key Principle:** Your clue should make sense to word-knowers WITHOUT helping imposters guess it.
 
 **Examples for "{word}":**
-- ❌ BAD (too obvious): Straightforward descriptions help imposters
-- ✓ GOOD (subtle): Oblique references only word-knowers would get
+- ❌ BAD (too obvious): Direct descriptions that give it away
+- ✓ GOOD (creative): Unique angles only word-knowers would understand
+- ✓ ALSO GOOD: Building on others IF it adds value without helping imposters
 
-**Strategic Balance:**
-- Prove to other non-imposters you know it (they'll understand the inside joke)
-- BUT don't give imposters enough context to figure it out
-- Straightforward clues are LAST RESORT only!
+**Strategic Freedom:**
+- You DON'T have to follow the pattern from previous clues
+- You CAN introduce completely new associations if they're good
+- Your goal: prove YOU know the word, not prove you heard others
 
 **Detecting Imposters:**
 - Watch for players giving TOO straightforward/generic clues
