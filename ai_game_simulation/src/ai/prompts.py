@@ -84,8 +84,9 @@ THE CHALLENGE:
 You must give clues WITHOUT knowing the word. You'll need to:
 1. Listen carefully to what others say
 2. Infer what the word might be based on their clues
-3. Give clues that FIT the pattern without being too obvious about not knowing
-4. Sound confident even when you're guessing
+3. Give clues that sound like you know (even though you're guessing)
+4. You CAN follow patterns OR introduce new angles - whatever feels natural
+5. Sound confident, be strategic, blend in
 
 YOUR STRATEGY (CRITICAL - This is how you survive):
 - **USE PREVIOUS CLUES** - This is your PRIMARY information source!
