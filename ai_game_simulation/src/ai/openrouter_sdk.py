@@ -71,13 +71,17 @@ class OpenRouterSDKClient:
             last_error = None
             for attempt in range(max_retries):
                 try:
-                    # Use OpenAI SDK with response_format
+                    # Use OpenAI SDK with response_format + OpenRouter plugins
+                    # Response Healing: Automatically fixes malformed JSON (markdown, trailing chars, etc.)
                     completion = await self.client.beta.chat.completions.parse(
                         model=model,
                         messages=messages,
                         temperature=temperature,
                         max_tokens=max_tokens,
-                        response_format=response_format if response_format else None
+                        response_format=response_format if response_format else None,
+                        extra_body={
+                            "plugins": ["response-healing"]  # Auto-fix malformed JSON
+                        }
                     )
 
                     if response_format:
