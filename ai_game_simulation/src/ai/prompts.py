@@ -203,7 +203,7 @@ Respond with valid JSON (string values only, no nested objects):
   "confidence": 85
 }}
 
-IMPORTANT: Keep "thinking" concise but strategic (aim for 200-400 words). You have limited space!"""
+RESPONSE BUDGET: Target 800 tokens total (max 2000). Keep "thinking" to 200-400 words for optimal performance."""
 
     else:  # Imposter
         return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
@@ -238,7 +238,7 @@ Respond with valid JSON (string values only):
   "confidence": 70
 }}
 
-IMPORTANT: Keep "thinking" focused and concise (aim for 200-400 words). Space is limited!"""
+RESPONSE BUDGET: Target 800 tokens total (max 2000). Keep "thinking" to 200-400 words for optimal performance."""
 
 
 # ============================================
@@ -304,7 +304,7 @@ Respond with JSON containing:
 - "confidence": How confident you are in your votes (0-100)
 - "reasoning_per_player": Dict with brief explanation (1-2 sentences each) for each person you're voting for
 
-IMPORTANT: Be concise! You have a 2000 token limit total. Focus on key insights, not exhaustive analysis.
+RESPONSE BUDGET: Target 1200 tokens (max 2000). Focus on key insights, not exhaustive analysis. Be strategic but concise.
 
 Example format:
 {{
