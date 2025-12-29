@@ -64,10 +64,13 @@ class GameConfig:
     model_strategy: str = "mixed"  # 'single' | 'mixed' | 'role-based'
     default_model: str = "llama"
 
-    # Model distribution (for 'mixed' strategy)
+    # Model distribution (for 'mixed' strategy) - "Tournament Mode" (diverse, fast, tested)
     model_distribution: Dict[str, int] = field(default_factory=lambda: {
-        'llama': 6,  # Primary - verified working
-        'haiku': 2,  # Premium - verified working
+        'gemini-3': 2,      # Fastest (1.98s)
+        'gemini-2.5': 2,    # Fast + max creativity
+        'gpt4o-mini': 2,    # OpenAI quality
+        'haiku': 1,         # Anthropic premium
+        'llama-3.3': 1,     # Meta flagship
     })
 
     # Optional features

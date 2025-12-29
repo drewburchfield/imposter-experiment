@@ -37,30 +37,61 @@ load_dotenv()
 # ============================================
 
 TEST_MODELS = {
-    # Budget Tier (Fast & Cheap)
-    'llama-8b': 'meta-llama/llama-3.1-8b-instruct',
-    'llama-70b': 'meta-llama/llama-3.1-70b-instruct',
-    'mistral-7b': 'mistralai/mistral-7b-instruct',
+    # ============================================
+    # FRONTIER MODELS (15) - Major Providers
+    # ============================================
 
-    # Reasoning Tier (Advanced Logic)
-    'qwen-72b': 'qwen/qwen-2.5-72b-instruct',
-    'qwen-32b': 'qwen/qwen3-32b',
-    'deepseek-r1': 'deepseek/deepseek-r1',
+    # Google (5)
+    'gemini-2.5-flash': 'google/gemini-2.5-flash',
+    'gemini-2.0-flash': 'google/gemini-2.0-flash-001',
+    'gemini-3-flash': 'google/gemini-3-flash-preview',
+    'gemini-2.0-exp': 'google/gemini-2.0-flash-exp',
+    'gemini-pro': 'google/gemini-pro',
 
-    # Premium Tier (Best Quality)
+    # Anthropic (3)
     'haiku-3.5': 'anthropic/claude-3.5-haiku',
     'sonnet-3.5': 'anthropic/claude-3.5-sonnet',
-    'gpt4o-mini': 'openai/gpt-4o-mini',
-    'gpt4o': 'openai/gpt-4o',
+    'opus-4.5': 'anthropic/claude-opus-4.5',
 
-    # Gemini Tier (Google)
-    'gemini-2.5': 'google/gemini-2.5-flash',
-    'gemini-2.0': 'google/gemini-2.0-flash-001',
+    # OpenAI (3)
+    'gpt-4o': 'openai/gpt-4o',
+    'gpt-4o-mini': 'openai/gpt-4o-mini',
+    'gpt-5-mini': 'openai/gpt-5-mini',
 
-    # Alternative/Experimental
-    'phi-4': 'microsoft/phi-4',
+    # Meta (3)
+    'llama-3.1-8b': 'meta-llama/llama-3.1-8b-instruct',
+    'llama-3.1-70b': 'meta-llama/llama-3.1-70b-instruct',
+    'llama-3.3-70b': 'meta-llama/llama-3.3-70b-instruct',
+
+    # X.AI (1)
+    'grok-fast': 'x-ai/grok-4.1-fast',
+
+    # ============================================
+    # ALTERNATIVE/OPEN SOURCE (15) - Other Providers
+    # ============================================
+
+    # Qwen (4)
+    'qwen-2.5-72b': 'qwen/qwen-2.5-72b-instruct',
+    'qwen3-32b': 'qwen/qwen3-32b',
+    'qwen3-8b': 'qwen/qwen3-8b',
+    'qwen-coder': 'qwen/qwen3-coder',
+
+    # DeepSeek (3)
+    'deepseek-v3': 'deepseek/deepseek-chat-v3',
+    'deepseek-r1': 'deepseek/deepseek-r1',
+    'deepseek-coder': 'deepseek/deepseek-coder',
+
+    # Mistral (3)
+    'mistral-7b': 'mistralai/mistral-7b-instruct',
+    'mistral-large': 'mistralai/mistral-large',
     'mixtral-8x7b': 'mistralai/mixtral-8x7b-instruct',
-    'command-r': 'cohere/command-r',
+
+    # Others (5)
+    'minimax-m2': 'minimax/minimax-01',
+    'cohere-command-r': 'cohere/command-r-plus',
+    'phi-4': 'microsoft/phi-4',
+    'yi-large': 'yi/yi-large',
+    'nous-hermes': 'nousresearch/hermes-3-llama-3.1-405b',
 }
 
 # ============================================

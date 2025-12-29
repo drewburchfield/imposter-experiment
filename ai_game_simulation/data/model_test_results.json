@@ -1,0 +1,484 @@
+{
+  "timestamp": 1767029971.4943218,
+  "mode": "quick",
+  "summary": {
+    "total_tests": 30,
+    "fully_working": 18,
+    "json_issues": 0,
+    "unavailable": 12
+  },
+  "model_scores": {
+    "gemini-2.5-flash": {
+      "success_rate": 100.0,
+      "avg_latency": 2320.82,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "gemini-2.0-flash": {
+      "success_rate": 50.0,
+      "avg_latency": 1175.47,
+      "avg_creativity": 50.8,
+      "tests_passed": 1
+    },
+    "gemini-3-flash": {
+      "success_rate": 100.0,
+      "avg_latency": 1978.82,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "gpt-4o": {
+      "success_rate": 100.0,
+      "avg_latency": 3628.92,
+      "avg_creativity": 100.0,
+      "tests_passed": 2
+    },
+    "gpt-4o-mini": {
+      "success_rate": 100.0,
+      "avg_latency": 2596.53,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "llama-3.1-8b": {
+      "success_rate": 100.0,
+      "avg_latency": 10614.38,
+      "avg_creativity": 49.8,
+      "tests_passed": 1
+    },
+    "llama-3.1-70b": {
+      "success_rate": 100.0,
+      "avg_latency": 22981.9,
+      "avg_creativity": 80.6,
+      "tests_passed": 1
+    },
+    "llama-3.3-70b": {
+      "success_rate": 100.0,
+      "avg_latency": 2872.57,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "qwen-2.5-72b": {
+      "success_rate": 100.0,
+      "avg_latency": 26011.98,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "qwen3-32b": {
+      "success_rate": 100.0,
+      "avg_latency": 9488.1,
+      "avg_creativity": 78.6,
+      "tests_passed": 1
+    },
+    "mistral-7b": {
+      "success_rate": 100.0,
+      "avg_latency": 9439.51,
+      "avg_creativity": 78.6,
+      "tests_passed": 1
+    },
+    "mistral-large": {
+      "success_rate": 100.0,
+      "avg_latency": 7041.31,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    },
+    "phi-4": {
+      "success_rate": 100.0,
+      "avg_latency": 7440.33,
+      "avg_creativity": 100.0,
+      "tests_passed": 1
+    }
+  },
+  "tier1_models": [
+    "gemini-2.5-flash",
+    "gemini-3-flash",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "llama-3.3-70b",
+    "qwen-2.5-72b",
+    "mistral-large",
+    "phi-4",
+    "llama-3.1-70b",
+    "qwen3-32b",
+    "mistral-7b",
+    "llama-3.1-8b"
+  ],
+  "all_results": [
+    {
+      "model": "google/gemini-2.5-flash",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 2320.82,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 677,
+      "confidence": 90
+    },
+    {
+      "model": "google/gemini-2.0-flash-001",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 1175.47,
+      "clue": "sunscreen",
+      "creativity_score": 50.8,
+      "error": null,
+      "thinking_length": 254,
+      "confidence": 85
+    },
+    {
+      "model": "google/gemini-3-flash-preview",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 1978.82,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 621,
+      "confidence": 95
+    },
+    {
+      "model": "google/gemini-2.0-flash-exp",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 404 - {'error': {'message': 'No endpoints found for google/gemini-2.0-flash-exp.', 'code",
+      "error_type": "unavailable"
+    },
+    {
+      "model": "google/gemini-pro",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 400 - {'error': {'message': 'google/gemini-pro is not a valid model ID', 'code': 400}, '",
+      "error_type": "unknown"
+    },
+    {
+      "model": "anthropic/claude-3.5-haiku",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 3294.82,
+      "clue": "sunburn",
+      "creativity_score": 78.0,
+      "error": null,
+      "thinking_length": 390,
+      "confidence": 88
+    },
+    {
+      "model": "anthropic/claude-3.5-sonnet",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 4363.65,
+      "clue": "volleyball",
+      "creativity_score": 87.6,
+      "error": null,
+      "thinking_length": 438,
+      "confidence": 85
+    },
+    {
+      "model": "anthropic/claude-opus-4.5",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': ",
+      "error_type": "unknown"
+    },
+    {
+      "model": "openai/gpt-4o",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 4661.31,
+      "clue": "lifeguard",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 761,
+      "confidence": 90
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 2596.53,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 568,
+      "confidence": 85
+    },
+    {
+      "model": "openai/gpt-5-mini",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens",
+      "error_type": "unknown"
+    },
+    {
+      "model": "meta-llama/llama-3.1-8b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 10614.38,
+      "clue": "surfing",
+      "creativity_score": 49.8,
+      "error": null,
+      "thinking_length": 249,
+      "confidence": 85
+    },
+    {
+      "model": "meta-llama/llama-3.1-70b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 22981.9,
+      "clue": "sunburn",
+      "creativity_score": 80.6,
+      "error": null,
+      "thinking_length": 403,
+      "confidence": 85
+    },
+    {
+      "model": "meta-llama/llama-3.3-70b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 2872.57,
+      "clue": "sunglasses",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 609,
+      "confidence": 85
+    },
+    {
+      "model": "x-ai/grok-4.1-fast",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 10066.46,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 577,
+      "confidence": 95
+    },
+    {
+      "model": "qwen/qwen-2.5-72b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 26011.98,
+      "clue": "windy",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 507,
+      "confidence": 85
+    },
+    {
+      "model": "qwen/qwen3-32b",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 9488.1,
+      "clue": "sunburn",
+      "creativity_score": 78.6,
+      "error": null,
+      "thinking_length": 393,
+      "confidence": 85
+    },
+    {
+      "model": "qwen/qwen3-8b",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens",
+      "error_type": "unknown"
+    },
+    {
+      "model": "qwen/qwen3-coder",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 4180.42,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 523,
+      "confidence": 85
+    },
+    {
+      "model": "deepseek/deepseek-chat-v3",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 12785.33,
+      "clue": "seashells",
+      "creativity_score": 88.8,
+      "error": null,
+      "thinking_length": 444,
+      "confidence": 85
+    },
+    {
+      "model": "deepseek/deepseek-r1",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens",
+      "error_type": "unknown"
+    },
+    {
+      "model": "deepseek/deepseek-coder",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 400 - {'error': {'message': 'deepseek/deepseek-coder is not a valid model ID', 'code': 4",
+      "error_type": "unknown"
+    },
+    {
+      "model": "mistralai/mistral-7b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 9439.51,
+      "clue": "seaside",
+      "creativity_score": 78.6,
+      "error": null,
+      "thinking_length": 393,
+      "confidence": 85
+    },
+    {
+      "model": "mistralai/mistral-large",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 7041.31,
+      "clue": "sunburn",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 1193,
+      "confidence": 90
+    },
+    {
+      "model": "mistralai/mixtral-8x7b-instruct",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens",
+      "error_type": "unknown"
+    },
+    {
+      "model": "minimax/minimax-01",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "'NoneType' object is not iterable",
+      "error_type": "unknown"
+    },
+    {
+      "model": "cohere/command-r-plus",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 404 - {'error': {'message': 'No endpoints found for cohere/command-r-plus.', 'code': 404",
+      "error_type": "unavailable"
+    },
+    {
+      "model": "microsoft/phi-4",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": true,
+      "json_valid": true,
+      "latency_ms": 7440.33,
+      "clue": "hurricane",
+      "creativity_score": 100,
+      "error": null,
+      "thinking_length": 543,
+      "confidence": 90
+    },
+    {
+      "model": "yi/yi-large",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Error code: 400 - {'error': {'message': 'yi/yi-large is not a valid model ID', 'code': 400}, 'user_i",
+      "error_type": "unknown"
+    },
+    {
+      "model": "nousresearch/hermes-3-llama-3.1-405b",
+      "test": "clue_generation",
+      "scenario": "nature - non_imposter",
+      "available": false,
+      "json_valid": false,
+      "latency_ms": null,
+      "clue": null,
+      "creativity_score": null,
+      "error": "Could not parse response content as the length limit was reached - CompletionUsage(completion_tokens",
+      "error_type": "unknown"
+    }
+  ]
+}
