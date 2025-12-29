@@ -302,49 +302,37 @@ class GameEngine:
         return result
 
     async def _execute_clue_round(self):
-        """Execute one round where all players give clues"""
+        """Execute one round where players give clues SEQUENTIALLY (each sees previous clues)"""
 
         # Visual display (CLI only)
         if self.visual_mode and CLI_DISPLAY_AVAILABLE:
             print_round_header(self.current_round, self.config.num_rounds)
-
-        # Build context for all players
-        context = GameContext(
-            current_round=self.current_round,
-            clues_so_far=self._get_clue_dicts()
-        )
-
-        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
             print_player_circle(self.players, current_speaker=None)
-            pause(1.5, "All players are thinking...")
 
-        # Prepare API requests for all players
-        requests = []
+        # Call players SEQUENTIALLY so each sees previous clues in this round
         for player in self.players:
+            # Build context with ALL clues so far (including this round)
+            context = GameContext(
+                current_round=self.current_round,
+                clues_so_far=self._get_clue_dicts()  # Updated after each player!
+            )
+
+            if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                pause(0.5, f"{player.player_id} is thinking...")
+
+            # Build messages for this specific player
             messages = player.build_clue_messages(context)
-            requests.append({
-                "messages": messages,
-                "model": get_model_id(player.model_name),
-                "temperature": self.config.temperature
-            })
 
-        # Call all AIs in parallel
-        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
-            print(f"\n{Colors.DIM}🤖 Calling {len(requests)} AIs concurrently...{Colors.RESET}")
-
-        responses = await self.openrouter.batch_call(
-            requests,
-            response_format=ClueResponse
-        )
-
-        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
-            print(f"{Colors.SUCCESS}✓ All AI responses received{Colors.RESET}\n")
-            pause(1.0)
-
-        # Process and display clues
-        for player, response in zip(self.players, responses):
-            if isinstance(response, Exception):
-                logger.error(f"{player.player_id} API call failed: {response}")
+            # Call LLM for this player
+            try:
+                response = await self.openrouter.call(
+                    messages=messages,
+                    model=get_model_id(player.model_name),
+                    response_format=ClueResponse,
+                    temperature=self.config.temperature
+                )
+            except Exception as e:
+                logger.error(f"{player.player_id} API call failed: {e}")
                 response = ClueResponse(
                     thinking="[API_ERROR] Language model failed to generate clue response. Using fallback generic clue.",
                     clue="uncertain",
@@ -481,7 +469,7 @@ class GameEngine:
                     thinking="[API_ERROR] Language model failed to generate valid voting response. Using empty vote as fallback to continue game.",
                     votes=[],
                     confidence=0,
-                    reasoning_per_player={}
+                    reasoning_per_player={"fallback": "API error occurred"}
                 )
 
             vote_record = VoteRecord(
