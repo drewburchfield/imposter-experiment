@@ -23,7 +23,7 @@ sys.path.insert(0, str(src_path))
 
 # Import modules directly
 from src.game_engine.engine import GameEngine, GameConfig
-from src.ai.openrouter import OpenRouterClient, AVAILABLE_MODELS
+from src.ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient, AVAILABLE_MODELS
 from src.utils.cli_display import print_game_setup, print_results as display_final_results
 
 # Setup logging (minimal for visual mode)
@@ -77,7 +77,7 @@ async def run_cli_game(
         )
         models_used = model_dist
     else:
-        # Default: all use Llama
+        # Default: all use Gemini 3 (fastest tested model)
         config = GameConfig(
             word=word,
             category=category,
@@ -87,7 +87,7 @@ async def run_cli_game(
             model_strategy='single',
             default_model='gemini-3'
         )
-        models_used = {'llama': num_players}
+        models_used = {'gemini-3': num_players}
 
     # Visual game setup display
     print_game_setup(config, models_used)

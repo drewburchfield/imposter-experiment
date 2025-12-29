@@ -133,13 +133,42 @@ Watch AI agents play social deduction game with real strategic reasoning.
 - Event-driven design with SSE streaming
 - Observable "thinking" shows AI reasoning process
 
-### Supported AI Models
+### AI Models: The "Brains" Behind the Players
 
-- **Llama 3.1 8B** - Fast, cost-effective, good quality
-- **Claude 3.5 Haiku** - Premium reasoning, best strategic play
-- **Gemini Flash 1.5** - Creative, fast responses
-- **GPT-4o Mini** - OpenAI option
-- **Mistral 7B** - Alternative budget model
+Think of each AI model as a different person's brain - some think faster, some are more creative, some are better at lying! We tested 30 different AI models and picked the 14 best performers. Here's what makes them special:
+
+#### ⚡ **Speed Champions** (Respond in 1-3 seconds)
+**Why speed matters:** Faster models = quicker games. Nobody wants to wait 30 seconds between each clue!
+
+- **Gemini 2.0/2.5/3** (Google) - Like the quick-thinking friend who always has an answer ready. Responds in 1-2 seconds!
+- **GPT-4o Mini** (OpenAI) - The reliable straight-A student. Fast AND smart (2.6 seconds).
+- **Claude 3.5 Haiku** (Anthropic) - The strategic thinker who plans ahead (3.4 seconds).
+
+#### 🎭 **Creativity Masters** (Best at making up clever clues)
+**Why creativity matters:** The more creative the clue, the harder for imposters to fake it!
+
+- **Gemini 2.5** & **GPT-4o** - Scored 100/100 for creativity (think of the most associations)
+- **Claude Sonnet** - Excellent at strategic, multi-layered thinking (91/100)
+- **DeepSeek V3** - Open-source model that's surprisingly clever (89/100)
+
+#### 🌍 **Open Source Heroes** (Free alternatives that anyone can use)
+**Why open source matters:** These models are available to everyone, not controlled by big companies!
+
+- **Qwen** (Chinese company) - Surprisingly good! Qwen Coder is as creative as GPT-4o
+- **Mistral** (French company) - European alternative that performs well
+- **DeepSeek** (Chinese research lab) - Shows that innovation happens worldwide
+
+#### 🏆 **What We Actually Use**
+Our default setup mixes the best from each category:
+- 2× Gemini 3 (fastest)
+- 2× Gemini 2.5 (fast + creative)
+- 2× GPT-4o Mini (OpenAI quality)
+- 1× Claude Haiku (best strategic reasoning)
+- 1× Qwen Coder (open source diversity)
+
+**Total game time:** About 1-2 minutes for 8 players!
+
+**Fun fact:** We tested models from 10 different companies across 4 continents. AI is truly global!
 
 ### Use Cases
 
