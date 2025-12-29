@@ -198,10 +198,12 @@ Types of associations:
 
 Respond with valid JSON (string values only, no nested objects):
 {{
-  "thinking": "Your strategic analysis as a single text string - analyze combinations, explain your associative word choice",
+  "thinking": "Your strategic analysis (3-5 sentences, max 500 words) - analyze combinations, explain your word choice",
   "clue": "one-word",
   "confidence": 85
-}}"""
+}}
+
+IMPORTANT: Keep "thinking" concise but strategic (aim for 200-400 words). You have limited space!"""
 
     else:  # Imposter
         return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
@@ -230,11 +232,13 @@ Avoids: 'beach' (might be exact word), 'water' (too generic)"
 
 Respond with valid JSON (string values only):
 {{
-  "thinking": "Your strategic analysis as a single text string - what pattern you see, your word guess, why your clue fits",
+  "thinking": "Your strategic analysis (3-5 sentences, max 500 words) - what pattern you see, your word guess, why your clue fits",
   "clue": "one-word",
   "word_hypothesis": "your-guess",
   "confidence": 70
-}}"""
+}}
+
+IMPORTANT: Keep "thinking" focused and concise (aim for 200-400 words). Space is limited!"""
 
 
 # ============================================
@@ -295,10 +299,12 @@ Remember: Imposters didn't know the word was "{word}" - they only knew the categ
 Think about which clues could have been given by someone who only knew the category.
 
 Respond with JSON containing:
-- "thinking": Your detailed analysis of the clues and reasoning (3-5 sentences)
+- "thinking": Your detailed analysis of the clues and reasoning (3-5 sentences, max 600 words)
 - "votes": List of {num_imposters} player IDs you're voting for (e.g., ["Player_3", "Player_7"])
 - "confidence": How confident you are in your votes (0-100)
-- "reasoning_per_player": Dict with brief explanation for each person you're voting for
+- "reasoning_per_player": Dict with brief explanation (1-2 sentences each) for each person you're voting for
+
+IMPORTANT: Be concise! You have a 1500 token limit total. Focus on key insights, not exhaustive analysis.
 
 Example format:
 {{
