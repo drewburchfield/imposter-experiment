@@ -82,6 +82,7 @@ class OpenRouterSDKClient:
 
                     if response_format:
                         # SDK handles parsing automatically
+                        # Note: OpenAI SDK's parse() method handles markdown-wrapped JSON automatically
                         result = completion.choices[0].message.parsed
                         if attempt > 0:
                             logger.info(f"📥 ✅ Success on retry {attempt + 1}: {type(result).__name__}")
@@ -146,19 +147,19 @@ AVAILABLE_MODELS = {
         'cost_per_1m': 0.80,
     },
     'gemini': {
-        'id': 'google/gemini-flash-1.5',
-        'name': 'Gemini Flash 1.5',
+        'id': 'google/gemini-2.5-flash',
+        'name': 'Gemini 2.5 Flash',
         'cost_per_1m': 0.075,
     },
     'gemini-2': {
-        'id': 'google/gemini-2.0-flash-exp:free',
-        'name': 'Gemini 2.0 Flash (Free)',
-        'cost_per_1m': 0.00,
+        'id': 'google/gemini-2.0-flash-001',
+        'name': 'Gemini 2.0 Flash',
+        'cost_per_1m': 0.075,
     },
     'qwen': {
-        'id': 'qwen/qwq-32b:free',
-        'name': 'Qwen QwQ 32B (Reasoning)',
-        'cost_per_1m': 0.00,
+        'id': 'qwen/qwen-2.5-72b-instruct',
+        'name': 'Qwen 2.5 72B',
+        'cost_per_1m': 0.35,
     },
     'gpt4o-mini': {
         'id': 'openai/gpt-4o-mini',
