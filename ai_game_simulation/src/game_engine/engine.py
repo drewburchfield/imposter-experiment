@@ -16,6 +16,15 @@ from .validation import validate_clue, check_win_condition, resolve_vote_tie, Va
 
 logger = logging.getLogger(__name__)
 
+# Default model distribution (used when None provided)
+DEFAULT_MODEL_DISTRIBUTION = {
+    'gemini-3': 2,      # Fastest (1.98s) - Google
+    'gemini-2.5': 2,    # Fast + max creativity - Google
+    'gpt4o-mini': 2,    # Premium quality - OpenAI
+    'haiku': 1,         # Best reasoning - Anthropic
+    'qwen-coder': 1,    # Open source - Qwen
+}
+
 # Import OpenRouter client (SDK preferred)
 try:
     from ..ai.openrouter_sdk import OpenRouterSDKClient as OpenRouterClient, get_model_id
@@ -205,10 +214,8 @@ class GameEngine:
             assignments = {}
             model_pool = []
 
-            # Handle None model_distribution by using dataclass default
-            distribution = self.config.model_distribution
-            if distribution is None:
-                distribution = GameConfig().model_distribution
+            # Handle None model_distribution by using module constant
+            distribution = self.config.model_distribution or DEFAULT_MODEL_DISTRIBUTION
 
             for model_key, count in distribution.items():
                 model_pool.extend([model_key] * count)
