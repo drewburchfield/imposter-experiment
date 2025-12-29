@@ -330,7 +330,7 @@ class GameEngine:
                     model=get_model_id(player.model_name),
                     response_format=ClueResponse,
                     temperature=self.config.temperature,
-                    max_tokens=1500
+                    max_tokens=2000
                 )
             except Exception as e:
                 logger.error(f"{player.player_id} API call failed: {e}")

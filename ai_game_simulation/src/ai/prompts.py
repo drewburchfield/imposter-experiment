@@ -304,7 +304,7 @@ Respond with JSON containing:
 - "confidence": How confident you are in your votes (0-100)
 - "reasoning_per_player": Dict with brief explanation (1-2 sentences each) for each person you're voting for
 
-IMPORTANT: Be concise! You have a 1500 token limit total. Focus on key insights, not exhaustive analysis.
+IMPORTANT: Be concise! You have a 2000 token limit total. Focus on key insights, not exhaustive analysis.
 
 Example format:
 {{

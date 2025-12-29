@@ -96,7 +96,7 @@ class OpenRouterSDKClient:
         model: Optional[str] = None,
         response_format: Optional[Type[BaseModel]] = None,
         temperature: float = 0.7,
-        max_tokens: int = 1500,  # Sufficient for complex reasoning + sequential context
+        max_tokens: int = 2000,  # Generous limit for complex reasoning + sequential context
         max_retries: int = 3
     ) -> Any:
         """
