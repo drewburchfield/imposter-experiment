@@ -149,7 +149,7 @@ function App() {
               <input
                 type="number"
                 value={config.num_players}
-                onChange={(e) => setConfig({...config, num_players: parseInt(e.target.value)})}
+                onChange={(e) => setConfig({...config, num_players: parseInt(e.target.value) || 6})}
                 min="4"
                 max="18"
               />
@@ -159,7 +159,7 @@ function App() {
               <input
                 type="number"
                 value={config.num_imposters}
-                onChange={(e) => setConfig({...config, num_imposters: parseInt(e.target.value)})}
+                onChange={(e) => setConfig({...config, num_imposters: parseInt(e.target.value) || 2})}
                 min="1"
                 max="5"
               />
@@ -169,7 +169,7 @@ function App() {
               <input
                 type="number"
                 value={config.num_rounds}
-                onChange={(e) => setConfig({...config, num_rounds: parseInt(e.target.value)})}
+                onChange={(e) => setConfig({...config, num_rounds: parseInt(e.target.value) || 2})}
                 min="1"
                 max="10"
               />
