@@ -65,7 +65,7 @@ class OpenRouterSDKClient:
     def __init__(
         self,
         api_key: Optional[str] = None,
-        default_model: str = "meta-llama/llama-3.1-8b-instruct",
+        default_model: str = "google/gemini-3-flash-preview",  # Fastest tested model
         max_concurrent: int = 20
     ):
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")

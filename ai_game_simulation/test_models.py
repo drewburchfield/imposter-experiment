@@ -310,7 +310,7 @@ async def run_model_tests(quick_mode: bool = False):
     print(f"Scenarios per model: {1 if quick_mode else len(TEST_SCENARIOS)}")
     print("\n" + "=" * 80 + "\n")
 
-    client = OpenRouterSDKClient(default_model='meta-llama/llama-3.1-8b-instruct')
+    client = OpenRouterSDKClient(default_model='google/gemini-3-flash-preview')
 
     all_results = []
 

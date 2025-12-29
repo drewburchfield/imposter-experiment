@@ -85,7 +85,7 @@ async def run_cli_game(
             num_imposters=num_imposters,
             num_rounds=num_rounds,
             model_strategy='single',
-            default_model='llama'
+            default_model='gemini-3'
         )
         models_used = {'llama': num_players}
 
