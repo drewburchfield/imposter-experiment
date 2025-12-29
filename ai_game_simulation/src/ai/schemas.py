@@ -59,8 +59,9 @@ class VoteResponse(BaseModel):
         ge=0,
         le=100
     )
-    reasoning_per_player: Dict[str, str] = Field(
-        description="Brief explanation for each suspected player (must provide for all voted players)"
+    reasoning_per_player: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Brief explanation for each suspected player"
     )
 
 

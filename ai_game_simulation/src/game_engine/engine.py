@@ -475,7 +475,7 @@ class GameEngine:
             vote_record = VoteRecord(
                 player_id=player.player_id,
                 voted_for=response.votes,
-                reasoning=response.reasoning_per_player,
+                reasoning=response.reasoning_per_player or {},
                 thinking=response.thinking,
                 confidence=response.confidence
             )
