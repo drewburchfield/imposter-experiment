@@ -100,6 +100,7 @@ async def create_game(request: CreateGameRequest):
     game_id = str(uuid.uuid4())
 
     # Create config
+    # Note: If model_distribution not provided, GameConfig uses its own tested defaults
     config = GameConfig(
         word=request.word,
         category=request.category,
@@ -107,11 +108,7 @@ async def create_game(request: CreateGameRequest):
         num_imposters=request.num_imposters,
         num_rounds=request.num_rounds,
         model_strategy=request.model_strategy,
-        model_distribution=request.model_distribution or {
-            'llama': request.num_players // 2,
-            'gemini': request.num_players // 4,
-            'haiku': request.num_players // 4
-        },
+        model_distribution=request.model_distribution,  # Let GameConfig handle None case
         enable_discussion=request.enable_discussion
     )
 
