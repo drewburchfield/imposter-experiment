@@ -205,7 +205,12 @@ class GameEngine:
             assignments = {}
             model_pool = []
 
-            for model_key, count in self.config.model_distribution.items():
+            # Handle None model_distribution by using dataclass default
+            distribution = self.config.model_distribution
+            if distribution is None:
+                distribution = GameConfig().model_distribution
+
+            for model_key, count in distribution.items():
                 model_pool.extend([model_key] * count)
 
             # Pad or trim to match player count
