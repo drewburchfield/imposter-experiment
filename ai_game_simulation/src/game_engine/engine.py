@@ -447,7 +447,8 @@ class GameEngine:
             requests.append({
                 "messages": messages,
                 "model": get_model_id(player.model_name),
-                "temperature": 0.5
+                "temperature": 0.5,
+                "max_tokens": 4000
             })
 
         if self.visual_mode and CLI_DISPLAY_AVAILABLE:
