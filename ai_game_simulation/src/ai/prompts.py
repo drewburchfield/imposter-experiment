@@ -286,24 +286,42 @@ def build_voting_prompt(
         for clue in rounds[round_num]:
             clue_text += f"{clue['player_id']}: \"{clue['clue']}\"\n"
 
+    # Build role-specific voting instructions
+    if role == PlayerRole.NON_IMPOSTER:
+        word_context = f"""
+You know the secret word was: "{word}"
+
+Now analyze all clues to identify who DIDN'T know the word:
+- Which clues seemed vague, generic, or could apply to many things?
+- Which clues don't make sense for "{word}" specifically?
+- Who seemed to be guessing rather than knowing?
+
+Remember: Imposters only knew the category "{category}" - they had to guess the word.
+Think about which clues could have been given by someone who only knew the category.
+"""
+    else:  # IMPOSTER
+        word_context = f"""
+You DON'T know what the secret word was (you only knew category: "{category}").
+
+Now you must vote WITHOUT knowing the word! Analyze the clues to identify:
+- Who else seemed uncertain or generic (potential imposters like you)
+- Who gave very specific, confident clues (probably knew the word)
+- Look for patterns that suggest others were guessing
+
+This is challenging since you don't know the word, but do your best analysis.
+Try to identify who else might have been an imposter based on their clue patterns.
+"""
+
     return f"""=== VOTING TIME - Identify the Imposters ===
 
-The secret word was: "{word}" (Category: {category})
+Category: {category}
 
 Review ALL the clues from {len(rounds)} rounds:
 {clue_text}
 
+{word_context}
+
 YOUR TASK: Vote for {num_imposters} player(s) you suspect are imposters.
-
-Analysis approach:
-1. Which clues seemed vague, generic, or could apply to many things?
-2. Which clues didn't build on previous information?
-3. Which clues seemed inconsistent with others?
-4. Which clues don't make sense for "{word}" specifically?
-5. Who seemed to be guessing rather than knowing?
-
-Remember: Imposters didn't know the word was "{word}" - they only knew the category "{category}".
-Think about which clues could have been given by someone who only knew the category.
 
 Respond with JSON containing:
 - "thinking": Your detailed analysis of the clues and reasoning (3-5 sentences, max 600 words)
