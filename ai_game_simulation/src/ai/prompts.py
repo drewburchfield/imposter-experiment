@@ -304,7 +304,11 @@ Respond with JSON containing:
 - "confidence": How confident you are in your votes (0-100)
 - "reasoning_per_player": Dict with brief explanation (1-2 sentences each) for each person you're voting for
 
-RESPONSE BUDGET: Target 1200 tokens (max 2000). Focus on key insights, not exhaustive analysis. Be strategic but concise.
+⚡ RESPONSE BUDGET: Target 1000-1200 tokens TOTAL (hard limit 4000).
+   - "thinking": 300-500 words MAX
+   - "reasoning_per_player": 1-2 sentences each
+   - Focus on KEY insights only - no rambling
+   - Quality over quantity
 
 Example format:
 {{
