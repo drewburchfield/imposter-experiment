@@ -166,19 +166,28 @@ class AIPlayer:
         """
         self.clues_given.append(clue_response)
 
-        # Add to conversation history
+        # Add to conversation history - CONDENSED version (just the clue, not full thinking)
+        # This prevents prompt bloat from storing 600+ word thinking for each round
+        condensed = {
+            "clue": clue_response.clue,
+            "confidence": clue_response.confidence
+        }
+        if clue_response.word_hypothesis:
+            condensed["word_hypothesis"] = clue_response.word_hypothesis
+
         self.conversation_history.append({
             "role": "assistant",
-            "content": clue_response.model_dump_json()
+            "content": f"My clue: \"{clue_response.clue}\" (confidence: {clue_response.confidence})"
         })
 
     def record_vote(self, vote_response: VoteResponse):
         """Record this player's vote"""
         self.votes_cast = vote_response
 
+        # Add condensed version to conversation history (not full thinking)
         self.conversation_history.append({
             "role": "assistant",
-            "content": vote_response.model_dump_json()
+            "content": f"My votes: {vote_response.votes} (confidence: {vote_response.confidence})"
         })
 
     def __repr__(self) -> str:
