@@ -146,7 +146,8 @@ def build_clue_prompt(
         category: Word category
     """
 
-    # Format previous clues
+    # Format previous clues - ONLY show the clue words (not thinking!)
+    # Players shouldn't see each other's inner thoughts, just what they said
     clue_history = ""
     if previous_clues:
         clue_history = "\n".join([
