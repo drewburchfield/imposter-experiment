@@ -203,7 +203,10 @@ Respond with valid JSON (string values only, no nested objects):
   "confidence": 85
 }}
 
-RESPONSE BUDGET: Target 800 tokens total (max 2000). Keep "thinking" to 200-400 words for optimal performance."""
+⚡ RESPONSE BUDGET: Target 600-800 tokens TOTAL (hard limit 4000).
+   - "thinking": 150-300 words MAX
+   - Be direct and strategic, not verbose
+   - Every word should add value"""
 
     else:  # Imposter
         return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
@@ -238,7 +241,10 @@ Respond with valid JSON (string values only):
   "confidence": 70
 }}
 
-RESPONSE BUDGET: Target 800 tokens total (max 2000). Keep "thinking" to 200-400 words for optimal performance."""
+⚡ RESPONSE BUDGET: Target 600-800 tokens TOTAL (hard limit 4000).
+   - "thinking": 150-300 words MAX
+   - Be direct and strategic, not verbose
+   - Every word should add value"""
 
 
 # ============================================
