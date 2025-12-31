@@ -562,13 +562,21 @@ class GameEngine:
 
         # Combine with instant eliminations
         all_eliminated = list(set(self.eliminated_players + eliminated_by_vote))
+        all_eliminated_set = set(all_eliminated)
 
-        # Actual imposters
-        actual_imposters = [
-            p.player_id
-            for p in self.players
-            if p.role == PlayerRole.IMPOSTER
-        ]
+        # Single pass to extract all player data (more efficient than multiple list comprehensions)
+        actual_imposters = []
+        remaining_players = []
+        num_civilians = 0
+
+        for player in self.players:
+            if player.role == PlayerRole.IMPOSTER:
+                actual_imposters.append(player.player_id)
+            else:
+                num_civilians += 1
+
+            if player.player_id not in all_eliminated_set:
+                remaining_players.append(player.player_id)
 
         # Calculate accuracy
         correctly_identified = set(all_eliminated) & set(actual_imposters)
@@ -578,8 +586,8 @@ class GameEngine:
         win_check = check_win_condition(
             eliminated_players=all_eliminated,
             all_imposters=actual_imposters,
-            remaining_players=[p.player_id for p in self.players if p.player_id not in all_eliminated],
-            num_civilians=len([p for p in self.players if p.role == PlayerRole.NON_IMPOSTER])
+            remaining_players=remaining_players,
+            num_civilians=num_civilians
         )
 
         # Create result
