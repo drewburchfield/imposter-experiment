@@ -6,8 +6,9 @@
 
 body {
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  background: #f7f7f7;
-  color: #2d3748;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+  color: #e0e0e8;
+  min-height: 100vh;
 }
 
 .app {
@@ -21,28 +22,38 @@ body {
 }
 
 .app-header h1 {
+  font-family: 'Space Mono', monospace;
   font-size: 2.5rem;
-  color: #ff6b6b;
+  background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 10px;
+  text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
 }
 
 .app-header p {
   font-size: 1.1rem;
-  color: #718096;
+  color: #8b8b9a;
 }
 
 .game-setup {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   padding: 40px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 0 40px rgba(58, 134, 255, 0.1);
 }
 
 .game-setup h2 {
+  font-family: 'Space Mono', monospace;
+  color: #ffffff;
   margin-bottom: 30px;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .setup-form {
@@ -58,34 +69,52 @@ body {
 }
 
 .form-group label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #4a5568;
+  color: #8b8b9a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .form-group input {
-  padding: 12px;
-  border: 2px solid #e2e8f0;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   font-size: 1rem;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 20px rgba(58, 134, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .start-btn {
-  background: #4ecdc4;
+  background: linear-gradient(135deg, #3a86ff, #8338ec);
   color: white;
   border: none;
-  padding: 15px 30px;
-  border-radius: 8px;
+  padding: 18px 40px;
+  border-radius: 12px;
+  font-family: 'Space Mono', monospace;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 10px;
+  box-shadow: 0 4px 20px rgba(58, 134, 255, 0.4);
 }
 
 .start-btn:hover {
-  background: #45b7aa;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+  box-shadow: 0 6px 30px rgba(58, 134, 255, 0.6);
 }
 
 .game-layout {
