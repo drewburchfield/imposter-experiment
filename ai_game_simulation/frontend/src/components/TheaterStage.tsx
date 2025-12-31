@@ -17,6 +17,8 @@ interface TheaterStageProps {
   isVotingPhase: boolean;
   currentVotingRound: number;
   totalVotingRounds: number;
+  // Current player generating content
+  thinkingPlayer: { playerId: string; model: string; action: 'clue' | 'vote'; index: number; total: number } | null;
   // Core game state
   players: Player[];
   currentRound: number;
@@ -42,6 +44,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   isVotingPhase,
   currentVotingRound,
   totalVotingRounds,
+  thinkingPlayer,
   players,
   currentRound,
   totalRounds,
@@ -156,21 +159,41 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
             </div>
           </div>
         ) : isVotingPhase && !displayedVote ? (
-          /* Voting started but no votes yet */
+          /* Voting started but no votes yet - show who is thinking */
           <div className="waiting-state">
             <div className="waiting-icon pulse">🗳️</div>
             <div className="waiting-title">Voting Phase</div>
-            <div className="waiting-context">
-              <div className="context-item">
-                <span className="context-label">Category:</span>
-                <span className="context-value">{category}</span>
+            {thinkingPlayer && thinkingPlayer.action === 'vote' ? (
+              <div className="thinking-player-spotlight">
+                <div className="thinking-player-info">
+                  <span className="thinking-player-name">{thinkingPlayer.playerId}</span>
+                  <span className="thinking-player-model">({thinkingPlayer.model})</span>
+                </div>
+                <div className="thinking-progress">
+                  is deliberating... ({thinkingPlayer.index} of {thinkingPlayer.total})
+                </div>
+                <div className="thinking-bar">
+                  <div
+                    className="thinking-bar-fill"
+                    style={{ width: `${(thinkingPlayer.index / thinkingPlayer.total) * 100}%` }}
+                  />
+                </div>
               </div>
-              <div className="context-item">
-                <span className="context-label">Secret Word:</span>
-                <span className="context-value secret">{word}</span>
-              </div>
-            </div>
-            <div className="waiting-subtitle">AI agents are analyzing clues and deciding who to eliminate...</div>
+            ) : (
+              <>
+                <div className="waiting-context">
+                  <div className="context-item">
+                    <span className="context-label">Category:</span>
+                    <span className="context-value">{category}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Secret Word:</span>
+                    <span className="context-value secret">{word}</span>
+                  </div>
+                </div>
+                <div className="waiting-subtitle">AI agents are analyzing clues and deciding who to eliminate...</div>
+              </>
+            )}
             <div className="thinking-dots">
               <span>.</span><span>.</span><span>.</span>
             </div>
@@ -279,21 +302,41 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                 <div className="waiting-subtitle">Assigning roles to AI agents...</div>
               </>
             ) : allClues.filter(c => c.round === currentRound).length === 0 ? (
-              // Round started but no clues yet in this round
+              // Round started but no clues yet - show who is thinking
               <>
                 <div className="waiting-icon pulse">💭</div>
-                <div className="waiting-title">Round {currentRound} Starting</div>
-                <div className="waiting-context">
-                  <div className="context-item">
-                    <span className="context-label">Category:</span>
-                    <span className="context-value">{category}</span>
+                <div className="waiting-title">Round {currentRound}</div>
+                {thinkingPlayer && thinkingPlayer.action === 'clue' ? (
+                  <div className="thinking-player-spotlight">
+                    <div className="thinking-player-info">
+                      <span className="thinking-player-name">{thinkingPlayer.playerId}</span>
+                      <span className="thinking-player-model">({thinkingPlayer.model})</span>
+                    </div>
+                    <div className="thinking-progress">
+                      is crafting a clue... ({thinkingPlayer.index} of {thinkingPlayer.total})
+                    </div>
+                    <div className="thinking-bar">
+                      <div
+                        className="thinking-bar-fill"
+                        style={{ width: `${(thinkingPlayer.index / thinkingPlayer.total) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="context-item">
-                    <span className="context-label">Secret Word:</span>
-                    <span className="context-value secret">{word}</span>
-                  </div>
-                </div>
-                <div className="waiting-subtitle">AI agents are thinking of clues...</div>
+                ) : (
+                  <>
+                    <div className="waiting-context">
+                      <div className="context-item">
+                        <span className="context-label">Category:</span>
+                        <span className="context-value">{category}</span>
+                      </div>
+                      <div className="context-item">
+                        <span className="context-label">Secret Word:</span>
+                        <span className="context-value secret">{word}</span>
+                      </div>
+                    </div>
+                    <div className="waiting-subtitle">AI agents are thinking of clues...</div>
+                  </>
+                )}
                 <div className="thinking-dots">
                   <span>.</span><span>.</span><span>.</span>
                 </div>

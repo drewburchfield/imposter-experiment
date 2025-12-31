@@ -59,6 +59,7 @@ function App() {
     totalVotingRounds: number;
     currentSpeaker: string | undefined;
     isVotingPhase: boolean;
+    thinkingPlayer: { playerId: string; model: string; action: 'clue' | 'vote'; index: number; total: number } | null;
     result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null;
   } = useMemo(() => {
     const players: Player[] = [];
@@ -70,6 +71,7 @@ function App() {
     let totalVotingRounds = 0;
     let currentSpeaker: string | undefined;
     let isVotingPhase = false;
+    let thinkingPlayer: { playerId: string; model: string; action: 'clue' | 'vote'; index: number; total: number } | null = null;
     let result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null = null;
 
     events.forEach(event => {
@@ -80,25 +82,40 @@ function App() {
 
         case 'round_start':
           currentRound = event.round;
+          thinkingPlayer = null; // Reset when new round starts
+          break;
+
+        case 'player_thinking':
+          thinkingPlayer = {
+            playerId: event.player_id,
+            model: event.player_model,
+            action: event.action,
+            index: event.player_index,
+            total: event.total_players
+          };
           break;
 
         case 'clue':
           clues.push(event as ClueEvent);
           currentSpeaker = event.player_id;
+          thinkingPlayer = null; // Clear thinking when clue arrives
           break;
 
         case 'voting_start':
           isVotingPhase = true;
+          thinkingPlayer = null;
           break;
 
         case 'voting_round_start':
           currentVotingRound = event.voting_round;
           totalVotingRounds = event.total_voting_rounds;
+          thinkingPlayer = null;
           break;
 
         case 'vote':
           votes.push(event as VoteEvent);
           currentSpeaker = event.player_id;
+          thinkingPlayer = null; // Clear thinking when vote arrives
           break;
 
         case 'elimination':
@@ -107,11 +124,12 @@ function App() {
 
         case 'game_complete':
           result = event.result;
+          thinkingPlayer = null;
           break;
       }
     });
 
-    return { players, clues, votes, eliminations, currentRound, currentVotingRound, totalVotingRounds, currentSpeaker, isVotingPhase, result };
+    return { players, clues, votes, eliminations, currentRound, currentVotingRound, totalVotingRounds, currentSpeaker, isVotingPhase, thinkingPlayer, result };
   }, [events]);
 
   // Keyboard navigation
@@ -258,6 +276,7 @@ function App() {
             isVotingPhase={gameState.isVotingPhase}
             currentVotingRound={gameState.currentVotingRound}
             totalVotingRounds={gameState.totalVotingRounds}
+            thinkingPlayer={gameState.thinkingPlayer}
             players={gameState.players}
             currentRound={gameState.currentRound}
             totalRounds={config.num_rounds}

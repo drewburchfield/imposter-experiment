@@ -72,9 +72,20 @@ export interface GameResult {
   total_rounds: number;
 }
 
+export interface PlayerThinkingEvent {
+  type: 'player_thinking';
+  player_id: string;
+  player_model: string;
+  action: 'clue' | 'vote';
+  player_index: number;
+  total_players: number;
+  voting_round?: number;
+}
+
 export type GameEvent =
   | { type: 'game_start'; players: Player[] }
   | { type: 'round_start'; round: number; total_rounds: number }
+  | PlayerThinkingEvent
   | ClueEvent
   | { type: 'round_end'; round: number }
   | { type: 'voting_start' }

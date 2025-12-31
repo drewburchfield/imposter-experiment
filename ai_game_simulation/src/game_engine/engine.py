@@ -322,12 +322,23 @@ class GameEngine:
             print_player_circle(self.players, current_speaker=None)
 
         # Call players SEQUENTIALLY so each sees previous clues in this round
-        for player in self.players:
+        for idx, player in enumerate(self.players):
             # Build context with ALL clues so far (including this round)
             context = GameContext(
                 current_round=self.current_round,
                 clues_so_far=self._get_clue_dicts()  # Updated after each player!
             )
+
+            # Emit thinking event BEFORE LLM call so frontend shows progress
+            if self.event_callback:
+                await self.event_callback({
+                    'type': 'player_thinking',
+                    'player_id': player.player_id,
+                    'player_model': player.model_name,
+                    'action': 'clue',
+                    'player_index': idx + 1,
+                    'total_players': len(self.players)
+                })
 
             if self.visual_mode and CLI_DISPLAY_AVAILABLE:
                 pause(0.5, f"{player.player_id} is thinking...")
@@ -479,8 +490,21 @@ class GameEngine:
             votes_this_round: List[Dict] = []
             vote_counts: Dict[str, int] = defaultdict(int)
 
-            for player in active_players:
+            for idx, player in enumerate(active_players):
                 logger.info(f"Getting vote from {player.player_id}...")
+
+                # Emit thinking event BEFORE LLM call
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'player_thinking',
+                        'player_id': player.player_id,
+                        'player_model': player.model_name,
+                        'action': 'vote',
+                        'player_index': idx + 1,
+                        'total_players': len(active_players),
+                        'voting_round': voting_round
+                    })
+
                 # Build messages with context of votes cast so far
                 messages = player.build_single_vote_messages(
                     all_clues=self._get_clue_dicts(),
