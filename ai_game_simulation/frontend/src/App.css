@@ -13,12 +13,13 @@ body {
 
 .app {
   min-height: 100vh;
-  padding: 20px;
+  padding: 0;
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 30px;
+  padding: 2rem 1rem;
+  margin: 0;
 }
 
 .app-header h1 {
@@ -39,7 +40,7 @@ body {
 
 .game-setup {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 4rem auto;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
