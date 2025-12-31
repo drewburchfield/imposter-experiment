@@ -118,7 +118,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                     <span className="timeline-round">R{clue.round}</span>
                   </div>
                   <div className="timeline-clue">"{clue.clue}"</div>
-                  {clue.word_hypothesis && (
+                  {clue.role === 'imposter' && clue.word_hypothesis && (
                     <div className="timeline-guess">→ {clue.word_hypothesis}</div>
                   )}
                 </div>
