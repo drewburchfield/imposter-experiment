@@ -8,6 +8,7 @@ import { PlayerCircle } from './components/PlayerCircle';
 import { InnerMonologue } from './components/InnerMonologue';
 import { GameControls } from './components/GameControls';
 import { ClueDisplay } from './components/ClueDisplay';
+import { ImposterReveal } from './components/ImposterReveal';
 import { useGameStream } from './hooks/useGameStream';
 import type { Player, ClueEvent } from './types/game';
 import './App.css';
@@ -202,12 +203,13 @@ function App() {
                 revealedRoles={!!gameState.result}
               />
               {gameState.result && (
-                <div className="result-card">
-                  <h2>🏆 Results</h2>
-                  <p>Detection Accuracy: {(gameState.result.detection_accuracy * 100).toFixed(1)}%</p>
-                  <p>Imposters: {gameState.result.actual_imposters.join(', ')}</p>
-                  <p>Eliminated: {gameState.result.eliminated_players.join(', ')}</p>
-                </div>
+                <ImposterReveal
+                  imposters={gameState.result.actual_imposters}
+                  eliminated={gameState.result.eliminated_players}
+                  players={gameState.players}
+                  detectionAccuracy={gameState.result.detection_accuracy}
+                  word={config.word}
+                />
               )}
             </div>
 
