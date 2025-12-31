@@ -5,15 +5,24 @@ Manages state transitions, turn coordination, and results calculation.
 
 import random
 import logging
+import time
 from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from collections import defaultdict
 
+from langsmith import traceable
+
 from .player import AIPlayer, GameContext, PlayerKnowledge
 from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse, SingleVoteResponse
 from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
+# Configure logging with more detail
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 # Default model distribution (used when None provided)
@@ -174,10 +183,17 @@ class GameEngine:
         logger.info(f"GameEngine created: {config.num_players} players, "
                    f"{config.num_imposters} imposters, word='{config.word}'")
 
+    @traceable(name="game_initialize")
     async def initialize_game(self):
         """
         Setup phase: Create AI players and randomly assign roles.
         """
+        logger.info("=" * 60)
+        logger.info("GAME INITIALIZATION STARTING")
+        logger.info(f"Word: '{self.config.word}', Category: '{self.config.category}'")
+        logger.info(f"Players: {self.config.num_players}, Imposters: {self.config.num_imposters}")
+        logger.info("=" * 60)
+
         self.phase = GamePhase.SETUP
 
         # Create player IDs
@@ -209,6 +225,14 @@ class GameEngine:
 
         logger.info(f"Game initialized with {len(self.players)} players")
         logger.info(f"Imposters: {imposter_ids}")
+
+        # DIAGNOSTIC: Log all player roles for debugging
+        logger.info("=" * 40)
+        logger.info("PLAYER ROLE ASSIGNMENTS:")
+        for player in self.players:
+            role_str = "IMPOSTER 🎭" if player.role == PlayerRole.IMPOSTER else "NON-IMPOSTER ✓"
+            logger.info(f"  {player.player_id}: {role_str} (model: {player.model_name})")
+        logger.info("=" * 40)
 
     def _assign_models(
         self,
@@ -262,6 +286,7 @@ class GameEngine:
         """Set callback for streaming events to API/UI"""
         self.event_callback = callback
 
+    @traceable(name="game_run")
     async def run_game(self) -> GameResult:
         """
         Main game loop with validation and win condition checking.
@@ -313,6 +338,7 @@ class GameEngine:
         self.phase = GamePhase.COMPLETE
         return result
 
+    @traceable(name="clue_round")
     async def _execute_clue_round(self):
         """Execute one round where players give clues SEQUENTIALLY (each sees previous clues)"""
 
@@ -323,6 +349,8 @@ class GameEngine:
 
         # Call players SEQUENTIALLY so each sees previous clues in this round
         for idx, player in enumerate(self.players):
+            logger.info(f"🎯 CLUE TURN: {player.player_id} ({idx + 1}/{len(self.players)}) - model: {player.model_name}")
+
             # Build context with ALL clues so far (including this round)
             context = GameContext(
                 current_round=self.current_round,
@@ -330,6 +358,7 @@ class GameEngine:
             )
 
             # Emit thinking event BEFORE LLM call so frontend shows progress
+            logger.info(f"📤 Emitting player_thinking event for {player.player_id}")
             if self.event_callback:
                 await self.event_callback({
                     'type': 'player_thinking',
@@ -346,9 +375,9 @@ class GameEngine:
             # Build messages for this specific player
             messages = player.build_clue_messages(context)
 
-            # Call LLM for this player
+            # Call LLM for this player with model fallback for resilience
             try:
-                response = await self.openrouter.call(
+                response = await self.openrouter.call_with_fallback(
                     messages=messages,
                     model=get_model_id(player.model_name),
                     response_format=ClueResponse,
@@ -356,12 +385,16 @@ class GameEngine:
                     max_tokens=5000
                 )
             except Exception as e:
-                logger.error(f"{player.player_id} API call failed: {e}")
-                response = ClueResponse(
-                    thinking="[API_ERROR] Language model failed to generate clue response. Using fallback generic clue.",
-                    clue="uncertain",
-                    confidence=0
-                )
+                # All models failed (primary + fallbacks) - game cannot continue
+                logger.error(f"{player.player_id} all LLM attempts failed: {e}")
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'error',
+                        'message': f"All LLM models failed for {player.player_id}: {str(e)}. Game cannot continue.",
+                        'player_id': player.player_id,
+                        'recoverable': False
+                    })
+                raise RuntimeError(f"All LLM models failed for {player.player_id}: {e}") from e
 
             # VALIDATE CLUE (including duplicate check)
             previous_clue_words = [c.clue for c in self.all_clues]
@@ -454,6 +487,7 @@ class GameEngine:
         logger.info("Discussion phase skipped in MVP")
         pass
 
+    @traceable(name="voting_phase")
     async def _execute_voting(self):
         """
         Sequential voting: One elimination per voting round.
@@ -518,33 +552,64 @@ class GameEngine:
                 if self.visual_mode and CLI_DISPLAY_AVAILABLE:
                     pause(0.5, f"{player.player_id} is deliberating...")
 
-                # Call LLM for this player's vote
+                # Call LLM for this player's vote with model fallback
                 try:
-                    response = await self.openrouter.call(
+                    response = await self.openrouter.call_with_fallback(
                         messages=messages,
                         model=get_model_id(player.model_name),
                         response_format=SingleVoteResponse,
                         temperature=0.5,
-                        max_tokens=2000
+                        max_tokens=5000  # Safety buffer above prompt guidance
                     )
                 except Exception as e:
-                    logger.error(f"{player.player_id} voting failed: {e}")
-                    # Fallback: vote for random non-eliminated player
-                    candidates = [p.player_id for p in active_players if p.player_id != player.player_id]
-                    fallback_vote = candidates[0] if candidates else "abstain"
-                    response = SingleVoteResponse(
-                        thinking="[API_ERROR] Vote failed, using fallback.",
-                        vote=fallback_vote,
-                        reasoning="API error - fallback vote",
-                        confidence=0
-                    )
+                    # All models failed (primary + fallbacks) - game cannot continue
+                    logger.error(f"{player.player_id} all vote attempts failed: {e}")
+                    if self.event_callback:
+                        await self.event_callback({
+                            'type': 'error',
+                            'message': f"All LLM models failed for {player.player_id}'s vote: {str(e)}. Game cannot continue.",
+                            'player_id': player.player_id,
+                            'recoverable': False
+                        })
+                    raise RuntimeError(f"All LLM models failed for {player.player_id} vote: {e}") from e
 
                 # Validate vote target exists and isn't eliminated
                 vote_target = response.vote
                 valid_targets = [p.player_id for p in active_players if p.player_id != player.player_id]
+
+                # If invalid vote, retry once with corrective prompt
                 if vote_target not in valid_targets:
-                    # Invalid vote - pick first valid target
-                    vote_target = valid_targets[0] if valid_targets else "abstain"
+                    logger.warning(f"{player.player_id} voted for invalid target '{vote_target}', retrying with correction")
+
+                    # Add corrective message and retry
+                    correction_messages = messages + [
+                        {"role": "assistant", "content": f'{{"vote": "{vote_target}"}}'},
+                        {"role": "user", "content": f"Invalid vote! '{vote_target}' is not an active player. You MUST vote for one of these players: {', '.join(valid_targets)}. Try again."}
+                    ]
+
+                    try:
+                        response = await self.openrouter.call_with_fallback(
+                            messages=correction_messages,
+                            model=get_model_id(player.model_name),
+                            response_format=SingleVoteResponse,
+                            temperature=0.5,
+                            max_tokens=5000  # Safety buffer above prompt guidance
+                        )
+                        vote_target = response.vote
+                    except Exception as e:
+                        logger.error(f"{player.player_id} vote correction failed: {e}")
+
+                    # Final validation after retry
+                    if vote_target not in valid_targets:
+                        logger.error(f"{player.player_id} still voted for invalid target after correction: {vote_target}")
+                        if self.event_callback:
+                            await self.event_callback({
+                                'type': 'error',
+                                'message': f"{player.player_id} repeatedly voted for invalid target '{vote_target}'. Game cannot continue.",
+                                'player_id': player.player_id,
+                                'recoverable': False
+                            })
+                        raise RuntimeError(f"Invalid vote target '{vote_target}' from {player.player_id} after retry")
 
                 # Record the vote
                 vote_record = SingleVoteRecord(
@@ -602,6 +667,23 @@ class GameEngine:
                 eliminated_player = next((p for p in self.players if p.player_id == eliminated), None)
                 was_imposter = eliminated_player.role == PlayerRole.IMPOSTER if eliminated_player else False
 
+                # DIAGNOSTIC: Log elimination details
+                logger.info("=" * 50)
+                logger.info(f"ELIMINATION IN VOTING ROUND {voting_round}:")
+                logger.info(f"  Eliminated: {eliminated}")
+                logger.info(f"  Player found: {eliminated_player is not None}")
+                if eliminated_player:
+                    logger.info(f"  Player role: {eliminated_player.role}")
+                    logger.info(f"  PlayerRole.IMPOSTER value: {PlayerRole.IMPOSTER}")
+                    logger.info(f"  Role check result (was_imposter): {was_imposter}")
+                logger.info(f"  Vote counts: {dict(vote_counts)}")
+
+                # Cross-reference with initial imposter list
+                all_imposters = [p.player_id for p in self.players if p.role == PlayerRole.IMPOSTER]
+                logger.info(f"  All imposters in game: {all_imposters}")
+                logger.info(f"  Is {eliminated} in imposter list? {eliminated in all_imposters}")
+                logger.info("=" * 50)
+
                 # Emit elimination event
                 if self.event_callback:
                     await self.event_callback({
@@ -656,6 +738,7 @@ class GameEngine:
             for c in self.all_clues
         ]
 
+    @traceable(name="calculate_results")
     def _calculate_results(self) -> GameResult:
         """
         Determine game outcome based on votes.
@@ -666,6 +749,13 @@ class GameEngine:
         logger.info(f"\n{'='*60}")
         logger.info("CALCULATING RESULTS")
         logger.info(f"{'='*60}")
+
+        # DIAGNOSTIC: Log current state
+        logger.info("FINAL GAME STATE:")
+        for player in self.players:
+            role_str = "IMPOSTER 🎭" if player.role == PlayerRole.IMPOSTER else "NON-IMPOSTER ✓"
+            eliminated = "ELIMINATED" if player.player_id in self.eliminated_players else "ACTIVE"
+            logger.info(f"  {player.player_id}: {role_str} - {eliminated}")
 
         # Tally votes
         vote_counts = defaultdict(int)

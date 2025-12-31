@@ -63,6 +63,21 @@ export interface EliminationEvent {
   remaining_imposters: number;
 }
 
+export interface ValidationErrorEvent {
+  type: 'validation_error';
+  player_id: string;
+  clue: string;
+  reason: string;
+  message: string;
+}
+
+export interface InstantRevealEvent {
+  type: 'instant_reveal';
+  player_id: string;
+  role: string;
+  reason: string;
+}
+
 export interface GameResult {
   word: string;
   category: string;

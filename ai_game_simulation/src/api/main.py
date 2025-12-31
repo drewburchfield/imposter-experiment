@@ -244,15 +244,21 @@ async def stream_game(game_id: str):
 
         try:
             while True:
-                # Wait for next event from queue
-                event = await event_queue.get()
+                try:
+                    # Wait for event with timeout for keepalive
+                    event = await asyncio.wait_for(event_queue.get(), timeout=15.0)
 
-                # None signals end of stream
-                if event is None:
-                    break
+                    # None signals end of stream
+                    if event is None:
+                        break
 
-                # Stream event immediately
-                yield f"data: {json.dumps(event)}\n\n"
+                    # Stream event immediately
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                except asyncio.TimeoutError:
+                    # Send keepalive comment to prevent proxy timeout
+                    yield ": keepalive\n\n"
+                    continue
 
         except asyncio.CancelledError:
             game_task.cancel()

@@ -55,19 +55,23 @@ def validate_clue(
                 message=f"{player_id} repeated clue '{clue}' - clues must be unique!"
             )
 
-    # Rule 1: Cannot say the exact word
+    # Rule 1: Non-imposters cannot say the exact word (they KNOW it)
+    # Imposters CAN say the word accidentally - they don't know it!
+    # (If an imposter says the word, it's a huge tell but NOT a rule violation)
     if clue.lower().strip() == secret_word.lower().strip():
         if role == PlayerRole.IMPOSTER:
-            # Imposter said the word - they reveal themselves!
+            # Imposter said the word - this is a HUGE tell, but they continue playing!
+            # They don't know they made a mistake. Other players will notice and vote them out.
+            # We record this as a valid clue - it just happens to be very revealing.
             return ValidationResult(
-                valid=False,
-                reason="word_match",
-                instant_reveal=True,
-                game_over=False,  # Game continues without them
-                message=f"{player_id} said '{clue}' - the secret word! Imposter revealed and eliminated!"
+                valid=True,  # Clue is recorded normally
+                reason="imposter_said_word",
+                instant_reveal=False,  # They keep playing, oblivious
+                game_over=False,
+                message=f"{player_id} said '{clue}' - coincidentally the secret word! A huge tell for other players."
             )
         else:
-            # Non-imposter said the word - rule violation
+            # Non-imposter said the word - rule violation (they KNOW the word)
             return ValidationResult(
                 valid=False,
                 reason="word_match",
@@ -77,15 +81,17 @@ def validate_clue(
             )
 
     # Rule 2: Check for word contained in clue (partial match)
-    if secret_word.lower() in clue.lower() or clue.lower() in secret_word.lower():
-        if len(secret_word) > 3:  # Only check for longer words
-            return ValidationResult(
-                valid=False,
-                reason="partial_word_match",
-                instant_reveal=False,
-                game_over=False,
-                message=f"{player_id}'s clue '{clue}' contains part of the secret word!"
-            )
+    # Only applies to non-imposters - imposters don't know the word!
+    if role == PlayerRole.NON_IMPOSTER:
+        if secret_word.lower() in clue.lower() or clue.lower() in secret_word.lower():
+            if len(secret_word) > 3:  # Only check for longer words
+                return ValidationResult(
+                    valid=False,
+                    reason="partial_word_match",
+                    instant_reveal=False,
+                    game_over=False,
+                    message=f"{player_id}'s clue '{clue}' contains part of the secret word!"
+                )
 
     # Rule 3: Clue length check (warn if too long)
     word_count = len(clue.split())

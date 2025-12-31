@@ -10,6 +10,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE_URL } from '../config/api';
 import type { GameEvent } from '../types/game';
 
+type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
+
 interface UseGameStreamResult {
   events: GameEvent[];
   isPlaying: boolean;
@@ -26,6 +28,9 @@ interface UseGameStreamResult {
   stepNext: () => void;
   // Buffer status
   isBuffering: boolean;
+  // Connection status
+  connectionStatus: ConnectionStatus;
+  connectionError: string | null;
 }
 
 // Check if event is a "content" event that should have speed-controlled pacing
@@ -43,6 +48,13 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   // History navigation state
   const [selectedEventIndex, setSelectedEventIndex] = useState<number | null>(null);
 
+  // Connection status
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  // Track if game completed successfully (to distinguish normal close from error)
+  const gameCompletedRef = useRef<boolean>(false);
+
   // Track when last content event was displayed (for pacing)
   const lastContentDisplayTimeRef = useRef<number>(0);
 
@@ -57,26 +69,97 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
 
   // Connect to SSE stream
   useEffect(() => {
-    if (!gameId) return;
+    if (!gameId) {
+      setConnectionStatus('disconnected');
+      return;
+    }
+
+    // Reset state for new game
+    gameCompletedRef.current = false;
+    setConnectionStatus('connecting');
+    setConnectionError(null);
 
     const eventSource = new EventSource(
       `${API_BASE_URL}/api/game/${gameId}/stream`
     );
 
-    eventSource.onmessage = (event) => {
-      const gameEvent: GameEvent = JSON.parse(event.data);
-      setEventQueue(prev => [...prev, gameEvent]);
+    eventSource.onopen = () => {
+      console.log('[SSE] Connection opened');
+      setConnectionStatus('connected');
+      setConnectionError(null);
     };
 
-    eventSource.onerror = () => {
-      console.error('SSE connection error');
-      eventSource.close();
+    eventSource.onmessage = (event) => {
+      try {
+        if (!event.data) {
+          console.warn('Received empty SSE message');
+          return;
+        }
+
+        // Clear any previous error - we're receiving data successfully
+        // (React will bail out if already null/connected, so this is safe to call unconditionally)
+        setConnectionError(null);
+        setConnectionStatus('connected');
+
+        const gameEvent: GameEvent = JSON.parse(event.data);
+        console.log('[SSE] Event received:', gameEvent.type);
+
+        // Handle error events from server
+        if (gameEvent.type === 'error') {
+          console.error('[SSE] Server error event:', gameEvent.message);
+          setConnectionError(`Game error: ${gameEvent.message}`);
+          // Still add to queue for debugging/history
+        }
+
+        // Track game completion to distinguish normal close from error
+        if (gameEvent.type === 'game_complete') {
+          console.log('[SSE] Game complete received, marking as completed');
+          gameCompletedRef.current = true;
+        }
+
+        setEventQueue(prev => [...prev, gameEvent]);
+      } catch (parseError) {
+        console.error('Failed to parse game event:', parseError, 'Raw data:', event.data);
+        setConnectionError('Received invalid data from server.');
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      // Detailed logging to diagnose error behavior
+      console.log('[SSE] onerror triggered', {
+        readyState: eventSource.readyState,
+        readyStateLabel: ['CONNECTING', 'OPEN', 'CLOSED'][eventSource.readyState],
+        gameCompleted: gameCompletedRef.current,
+        error: err,
+        url: eventSource.url
+      });
+
+      // Don't show error if game completed successfully - stream closing is expected
+      if (gameCompletedRef.current) {
+        console.log('[SSE] Game completed, closing is expected');
+        setConnectionStatus('disconnected');
+        eventSource.close();
+        return;
+      }
+
+      // Only show error for truly unrecoverable failures (connection actually closed)
+      // Transient errors will recover and clear via onmessage
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.error('[SSE] Connection CLOSED - unrecoverable');
+        setConnectionStatus('error');
+        setConnectionError('Connection to game server lost. The game cannot continue.');
+        eventSource.close();
+      } else {
+        // readyState is CONNECTING (0) or OPEN (1) - browser may be retrying
+        console.warn(`[SSE] Error with readyState=${eventSource.readyState}, not closing`);
+      }
     };
 
     eventSourceRef.current = eventSource;
 
     return () => {
       eventSource.close();
+      setConnectionStatus('disconnected');
     };
   }, [gameId]);
 
@@ -202,6 +285,9 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     stepPrev,
     stepNext,
     // Buffer status
-    isBuffering
+    isBuffering,
+    // Connection status
+    connectionStatus,
+    connectionError
   };
 }

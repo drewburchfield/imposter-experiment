@@ -36,8 +36,6 @@ interface TheaterStageProps {
   onGoToLive: () => void;
   // Game completion
   gameComplete?: boolean;
-  // Buffer status
-  isBuffering?: boolean;
 }
 
 export const TheaterStage: React.FC<TheaterStageProps> = ({
@@ -61,8 +59,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   onSelectClue,
   onSelectVote,
   onGoToLive,
-  gameComplete,
-  isBuffering
+  gameComplete
 }) => {
   // Determine which clue to show in spotlight
   // If viewing clue history, show the selected clue; otherwise show the latest

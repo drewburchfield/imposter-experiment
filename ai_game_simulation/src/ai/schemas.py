@@ -22,7 +22,7 @@ class ClueResponse(BaseModel):
     thinking: str = Field(
         description="Inner monologue - strategic reasoning about what clue to give and why",
         min_length=10,
-        max_length=2000  # Increased for detailed strategic analysis
+        max_length=4000  # LLMs often generate detailed strategic analysis
     )
     clue: str = Field(
         description="The actual one-word clue (can include hyphens)",
@@ -48,7 +48,7 @@ class VoteResponse(BaseModel):
     thinking: str = Field(
         description="Analysis of clues and reasoning for votes",
         min_length=20,
-        max_length=2000  # Increased for detailed analysis
+        max_length=4000  # LLMs often generate detailed vote analysis
     )
     votes: List[str] = Field(
         description="List of player IDs to vote out (can be empty if uncertain)",
@@ -73,7 +73,7 @@ class SingleVoteResponse(BaseModel):
     thinking: str = Field(
         description="Analysis and reasoning for who to vote out this round",
         min_length=20,
-        max_length=1500
+        max_length=4000  # LLMs often generate detailed vote analysis
     )
     vote: str = Field(
         description="Single player ID to vote for elimination (e.g., 'Player_3')",

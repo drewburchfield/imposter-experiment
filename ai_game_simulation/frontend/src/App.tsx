@@ -38,7 +38,7 @@ function App() {
     goToLive,
     stepPrev,
     stepNext,
-    isBuffering
+    connectionError
   } = useGameStream(gameId);
 
   // Separate vote selection (votes are inspectable like clues)
@@ -225,6 +225,17 @@ function App() {
         <p>Watch AI agents play social deduction with visible reasoning</p>
       </header>
 
+      {/* Error Banner */}
+      {connectionError && (
+        <div className="error-banner">
+          <span className="error-icon">⚠️</span>
+          <span className="error-message">{connectionError}</span>
+          <button className="error-action" onClick={startNewGame}>
+            Start New Game
+          </button>
+        </div>
+      )}
+
       {!gameStarted ? (
         <div className="game-setup">
           <h2>Game Setup</h2>
@@ -316,7 +327,6 @@ function App() {
             onSelectVote={selectVote}
             onGoToLive={handleGoToLive}
             gameComplete={!!gameState.result}
-            isBuffering={isBuffering}
           />
 
           {/* Results Modal */}

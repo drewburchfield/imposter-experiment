@@ -75,14 +75,20 @@ class OpenRouterSDKClient:
         self.default_model = default_model
 
         # Initialize OpenAI client pointing to OpenRouter
+        # EXPLICIT TIMEOUTS for Fly.io environment:
+        # - LLM calls can take 10-30+ seconds for complex responses
+        # - Default OpenAI timeout is 600s (10 min) but httpx default may be shorter
+        # - Fly.io proxy timeout is 60s by default
         base_client = AsyncOpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=self.api_key,
             default_headers={
                 "HTTP-Referer": "https://imposter-experiment.fly.dev",
                 "X-Title": "Imposter Mystery AI Game"
-            }
+            },
+            timeout=120.0,  # 2 minute timeout per request (LLMs can be slow)
         )
+        logger.info(f"OpenRouter SDK client initialized with 120s timeout")
 
         # Wrap client with LangSmith for observability
         self.client = wrappers.wrap_openai(base_client)
@@ -176,6 +182,64 @@ class OpenRouterSDKClient:
             tasks.append(task)
 
         return await asyncio.gather(*tasks, return_exceptions=True)
+
+    @traceable(name="openrouter_call_with_fallback")
+    async def call_with_fallback(
+        self,
+        messages: List[Dict[str, str]],
+        model: str,
+        response_format: Optional[Type[BaseModel]] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 500,
+        max_retries: int = 3,
+        fallback_models: Optional[List[str]] = None
+    ) -> Any:
+        """
+        Make API call with model fallback for resilience.
+        Tries primary model first, then falls back to alternative models.
+        Never returns fake data - either succeeds or raises.
+        """
+        logger.info(f"🎯 call_with_fallback: model={model}, response_type={response_format.__name__ if response_format else 'None'}")
+        from . import openrouter_sdk  # Local import for get_fallback_models
+
+        # Build ordered list of models to try
+        models_to_try = [model]
+        if fallback_models:
+            models_to_try.extend(fallback_models)
+        else:
+            models_to_try.extend(openrouter_sdk.get_fallback_models(model))
+
+        last_error = None
+        for i, current_model in enumerate(models_to_try):
+            try:
+                model_id = openrouter_sdk.get_model_id(current_model)
+                if i > 0:
+                    logger.warning(f"🔄 Trying fallback model {i}: {current_model}")
+
+                result = await self.call(
+                    messages=messages,
+                    model=model_id,
+                    response_format=response_format,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    max_retries=max_retries
+                )
+
+                if i > 0:
+                    logger.info(f"✅ Fallback model {current_model} succeeded")
+                return result
+
+            except Exception as e:
+                last_error = e
+                logger.warning(f"❌ Model {current_model} failed: {e}")
+                # Continue to next fallback model
+
+        # All models exhausted - raise with context
+        raise RuntimeError(
+            f"All {len(models_to_try)} models failed. "
+            f"Tried: {', '.join(models_to_try)}. "
+            f"Last error: {last_error}"
+        ) from last_error
 
 
 # Model registry - Top performers from comprehensive 30-model testing
@@ -306,9 +370,32 @@ AVAILABLE_MODELS = {
     },
 }
 
+# Fallback chain for resilience - fast → reliable → premium
+# Used when primary model fails all retries
+MODEL_FALLBACK_CHAIN = [
+    'gemini-2.0',    # Fastest, most reliable
+    'gpt4o-mini',    # OpenAI reliability
+    'haiku',         # Anthropic quality
+    'gemini-2.5',    # Alternative Google
+    'sonnet',        # Premium fallback
+]
+
 
 def get_model_id(model_key: str) -> str:
     """Convert short model key to full OpenRouter model ID"""
     if model_key in AVAILABLE_MODELS:
         return AVAILABLE_MODELS[model_key]['id']
     return model_key
+
+
+def get_fallback_models(primary_model: str) -> list[str]:
+    """Get ordered list of fallback models, excluding the primary."""
+    # Convert full model ID to key if needed
+    model_key = primary_model
+    for key, info in AVAILABLE_MODELS.items():
+        if info['id'] == primary_model:
+            model_key = key
+            break
+
+    # Return fallback chain excluding the primary
+    return [m for m in MODEL_FALLBACK_CHAIN if m != model_key]
