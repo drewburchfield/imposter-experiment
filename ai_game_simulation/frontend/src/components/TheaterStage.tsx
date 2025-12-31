@@ -13,6 +13,11 @@ interface TheaterStageProps {
   players: Player[];
   currentRound: number;
   totalRounds: number;
+  // History navigation
+  selectedEventIndex: number | null;
+  isViewingHistory: boolean;
+  onSelectEvent: (index: number) => void;
+  onGoToLive: () => void;
 }
 
 export const TheaterStage: React.FC<TheaterStageProps> = ({
@@ -20,18 +25,41 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   allClues,
   players,
   currentRound,
-  totalRounds
+  totalRounds,
+  selectedEventIndex,
+  isViewingHistory,
+  onSelectEvent,
+  onGoToLive
 }) => {
-  const currentPlayer = currentClue
-    ? players.find(p => p.id === currentClue.player_id)
+  // Determine which clue to show in spotlight
+  // If viewing history, show the selected clue; otherwise show the latest
+  const displayedClue = isViewingHistory && selectedEventIndex !== null
+    ? allClues[selectedEventIndex] || null
+    : currentClue;
+
+  const currentPlayer = displayedClue
+    ? players.find(p => p.id === displayedClue.player_id)
     : null;
 
   return (
     <div className="theater-stage">
       {/* Main spotlight - current player */}
-      <div className="spotlight-area">
-        {currentClue && currentPlayer ? (
-          <div className={`player-performance ${currentClue.role}`}>
+      <div className={`spotlight-area ${isViewingHistory ? 'viewing-history' : ''}`}>
+        {/* History mode indicator */}
+        {isViewingHistory && (
+          <div className="history-indicator">
+            <span className="history-badge">⏮ Viewing History</span>
+            <span className="history-position">
+              {selectedEventIndex !== null ? selectedEventIndex + 1 : 0} / {allClues.length}
+            </span>
+            <button className="return-to-live-btn" onClick={onGoToLive}>
+              Return to Live →
+            </button>
+          </div>
+        )}
+
+        {displayedClue && currentPlayer ? (
+          <div className={`player-performance ${displayedClue.role}`}>
             {/* Player info header */}
             <div className="performance-header">
               <div className="player-badge">
@@ -41,28 +69,28 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                 <div className="player-details">
                   <div className="player-name">{currentPlayer.id}</div>
                   <div className="player-model">{currentPlayer.model}</div>
-                  <div className="round-indicator">Round {currentClue.round}</div>
+                  <div className="round-indicator">Round {displayedClue.round}</div>
                 </div>
               </div>
 
               {/* Role indicator (only show if imposter for visual interest) */}
-              {currentClue.role === 'imposter' && (
+              {displayedClue.role === 'imposter' && (
                 <div className="role-badge imposter">
                   <span className="badge-icon">🎭</span>
                   <span className="badge-text">Imposter</span>
-                  {currentClue.word_hypothesis && (
-                    <span className="guess-text">Guessing: {currentClue.word_hypothesis}</span>
+                  {displayedClue.word_hypothesis && (
+                    <span className="guess-text">Guessing: {displayedClue.word_hypothesis}</span>
                   )}
                 </div>
               )}
 
               {/* Confidence meter */}
               <div className="confidence-display">
-                <div className="confidence-label">{currentClue.confidence}% confident</div>
+                <div className="confidence-label">{displayedClue.confidence}% confident</div>
                 <div className="confidence-bar">
                   <div
                     className="confidence-fill"
-                    style={{ width: `${currentClue.confidence}%` }}
+                    style={{ width: `${displayedClue.confidence}%` }}
                   />
                 </div>
               </div>
@@ -72,7 +100,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
             <div className="clue-spotlight">
               <div className="clue-label">Their Clue:</div>
               <div className="clue-word-massive">
-                "{currentClue.clue}"
+                "{displayedClue.clue}"
               </div>
             </div>
 
@@ -80,7 +108,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
             <div className="thinking-display">
               <div className="thinking-label">💭 Inner Monologue:</div>
               <div className="thinking-text">
-                {currentClue.thinking}
+                {displayedClue.thinking}
               </div>
             </div>
           </div>
@@ -102,26 +130,44 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         <div className="timeline-scroll">
           {allClues.map((clue, index) => {
             const isImposter = clue.role === 'imposter';
+            const isSelected = selectedEventIndex === index;
+            const isLatest = index === allClues.length - 1 && !isViewingHistory;
+            const prevClue = index > 0 ? allClues[index - 1] : null;
+            const isNewRound = !prevClue || prevClue.round !== clue.round;
 
             return (
-              <div
-                key={index}
-                className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${currentClue?.player_id === clue.player_id ? 'current' : ''}`}
-              >
-                <div className="timeline-marker">
-                  {isImposter ? '🎭' : '✓'}
-                </div>
-                <div className="timeline-content">
-                  <div className="timeline-meta">
-                    <span className="timeline-player">{clue.player_id}</span>
-                    <span className="timeline-round">R{clue.round}</span>
+              <React.Fragment key={index}>
+                {/* Round divider */}
+                {isNewRound && (
+                  <div className="timeline-round-header">
+                    <span className="round-line" />
+                    <span className="round-label">Round {clue.round}</span>
+                    <span className="round-line" />
                   </div>
-                  <div className="timeline-clue">"{clue.clue}"</div>
-                  {clue.role === 'imposter' && clue.word_hypothesis && (
-                    <div className="timeline-guess">→ {clue.word_hypothesis}</div>
-                  )}
+                )}
+
+                <div
+                  className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${isSelected ? 'selected' : ''} ${isLatest ? 'current' : ''}`}
+                  onClick={() => onSelectEvent(index)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && onSelectEvent(index)}
+                >
+                  <div className="timeline-marker">
+                    {isSelected ? '👁' : isImposter ? '🎭' : '✓'}
+                  </div>
+                  <div className="timeline-content">
+                    <div className="timeline-meta">
+                      <span className="timeline-player">{clue.player_id}</span>
+                      <span className="timeline-round">R{clue.round}</span>
+                    </div>
+                    <div className="timeline-clue">"{clue.clue}"</div>
+                    {clue.role === 'imposter' && clue.word_hypothesis && (
+                      <div className="timeline-guess">→ {clue.word_hypothesis}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })}
         </div>

@@ -1,9 +1,9 @@
 /**
  * Custom hook for SSE game streaming with playback control.
- * Manages event queue and speed-controlled playback.
+ * Manages event queue, speed-controlled playback, and history navigation.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE_URL } from '../config/api';
 import type { GameEvent } from '../types/game';
 
@@ -14,6 +14,13 @@ interface UseGameStreamResult {
   setSpeed: (speed: number) => void;
   togglePlay: () => void;
   currentEventIndex: number;
+  // History navigation
+  selectedEventIndex: number | null;
+  isViewingHistory: boolean;
+  selectEvent: (index: number) => void;
+  goToLive: () => void;
+  stepPrev: () => void;
+  stepNext: () => void;
 }
 
 export function useGameStream(gameId: string | null): UseGameStreamResult {
@@ -23,8 +30,14 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   const [speed, setSpeed] = useState(1.0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // History navigation state
+  const [selectedEventIndex, setSelectedEventIndex] = useState<number | null>(null);
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const playbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derived state: are we viewing history vs live?
+  const isViewingHistory = selectedEventIndex !== null;
 
   // Connect to SSE stream
   useEffect(() => {
@@ -86,9 +99,44 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     };
   }, [isPlaying, currentIndex, eventQueue, speed]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);
-  };
+  }, []);
+
+  // Select a specific event to view (auto-pauses)
+  const selectEvent = useCallback((index: number) => {
+    if (index >= 0 && index < displayedEvents.length) {
+      setSelectedEventIndex(index);
+      setIsPlaying(false); // Auto-pause when browsing history
+    }
+  }, [displayedEvents.length]);
+
+  // Return to live mode (clears selection, optionally resumes)
+  const goToLive = useCallback(() => {
+    setSelectedEventIndex(null);
+    setIsPlaying(true); // Resume playback
+  }, []);
+
+  // Step to previous event
+  const stepPrev = useCallback(() => {
+    const currentViewIndex = selectedEventIndex ?? displayedEvents.length - 1;
+    if (currentViewIndex > 0) {
+      setSelectedEventIndex(currentViewIndex - 1);
+      setIsPlaying(false);
+    }
+  }, [selectedEventIndex, displayedEvents.length]);
+
+  // Step to next event
+  const stepNext = useCallback(() => {
+    const currentViewIndex = selectedEventIndex ?? displayedEvents.length - 1;
+    if (currentViewIndex < displayedEvents.length - 1) {
+      setSelectedEventIndex(currentViewIndex + 1);
+      setIsPlaying(false);
+    } else {
+      // At the end, go to live
+      setSelectedEventIndex(null);
+    }
+  }, [selectedEventIndex, displayedEvents.length]);
 
   return {
     events: displayedEvents,
@@ -96,6 +144,13 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     speed,
     setSpeed,
     togglePlay,
-    currentEventIndex: currentIndex
+    currentEventIndex: currentIndex,
+    // History navigation
+    selectedEventIndex,
+    isViewingHistory,
+    selectEvent,
+    goToLive,
+    stepPrev,
+    stepNext
   };
 }

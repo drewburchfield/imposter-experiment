@@ -25,7 +25,19 @@ function App() {
     num_rounds: 2
   });
 
-  const { events, isPlaying, speed, setSpeed, togglePlay } = useGameStream(gameId);
+  const {
+    events,
+    isPlaying,
+    speed,
+    setSpeed,
+    togglePlay,
+    selectedEventIndex,
+    isViewingHistory,
+    selectEvent,
+    goToLive,
+    stepPrev,
+    stepNext
+  } = useGameStream(gameId);
 
   // Derive game state from events
   // Handle game start separately to avoid setState in useMemo
@@ -73,6 +85,40 @@ function App() {
 
     return { players, clues, currentRound, currentSpeaker, result };
   }, [events]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't capture when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          stepPrev();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          stepNext();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          if (isViewingHistory) {
+            goToLive();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [togglePlay, stepPrev, stepNext, goToLive, isViewingHistory]);
 
   const startGame = async () => {
     try {
@@ -178,6 +224,10 @@ function App() {
               players={gameState.players}
               currentRound={gameState.currentRound}
               totalRounds={config.num_rounds}
+              selectedEventIndex={selectedEventIndex}
+              isViewingHistory={isViewingHistory}
+              onSelectEvent={selectEvent}
+              onGoToLive={goToLive}
             />
           )}
         </>
