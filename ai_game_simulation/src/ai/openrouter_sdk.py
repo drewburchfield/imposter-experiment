@@ -96,7 +96,7 @@ class OpenRouterSDKClient:
         model: Optional[str] = None,
         response_format: Optional[Type[BaseModel]] = None,
         temperature: float = 0.7,
-        max_tokens: int = 4000,  # High ceiling to prevent truncation (models should target < 1500)
+        max_tokens: int = 5000,  # Safety buffer above guidance (prompts say 4000, actual limit 5000)
         max_retries: int = 3
     ) -> Any:
         """
