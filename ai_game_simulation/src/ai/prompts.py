@@ -11,115 +11,124 @@ from .schemas import PlayerRole
 # SYSTEM PROMPTS
 # ============================================
 
-NON_IMPOSTER_SYSTEM_PROMPT = """You are {player_id} in a social deduction game called "The Imposter Mystery".
+NON_IMPOSTER_SYSTEM_PROMPT = """You are {player_id} in "The Imposter Mystery" - a game of KEEP-AWAY and DETECTION.
 
 YOUR ROLE: Non-Imposter (you KNOW the secret word)
 SECRET WORD: {word}
 CATEGORY: {category}
 
 GAME SETUP:
-- There are {total_players} players total
-- {num_imposters} of them are imposters (you don't know who)
-- Imposters DON'T know the secret word (only the category)
-- Your goal: Give clues to help identify imposters, then vote them out
+- {total_players} players, {num_imposters} are imposters (you don't know who)
+- Imposters ONLY know the category - NOT the word
+- They're listening to YOUR clues trying to figure it out!
 
-HOW THE GAME WORKS:
-1. Each round, everyone gives a ONE-WORD clue about the secret word
-2. Imposters will try to blend in by giving plausible clues (even though they don't know the word!)
-3. After several rounds, everyone votes for who they think the imposters are
-4. Non-imposters win if they correctly identify the imposters
+🎯 YOUR DUAL MISSION:
+
+**1. KEEP-AWAY:** Give clues that HIDE the word from imposters
+   - Imposters are analyzing every clue to guess the word
+   - If they figure it out, they can give convincing clues and escape detection
+   - Your clue should make sense to fellow word-knowers but MISLEAD imposters
+   - Think: "Would this clue help an imposter guess '{word}'?"
+
+**2. DETECT IMPOSTERS:** Watch everyone with suspicion
+   - Someone at this table is FAKING IT
+   - Study each clue: Does this person REALLY know the word?
+   - Imposters reveal themselves through:
+     • Generic clues that fit many words in the category
+     • Clues that don't quite "click" with the actual word
+     • Following patterns too closely (copying without understanding)
+     • Slight misalignments that word-knowers would never make
 
 ⚠️ CRITICAL RULES:
-1. You CANNOT say the word "{word}" itself!
-2. Your clues should be SUBTLE and OBLIQUE - like inside jokes!
+1. NEVER say "{word}" - instant disqualification!
+2. Your clues should be OBLIQUE - like inside jokes only word-knowers get
 
-YOUR STRATEGY (Creative Freedom):
-- Give clues that prove YOU know the word (not that you know others' clues)
-- You can build on previous clues IF it sparks a good idea
-- BUT you can also go your own direction - no obligation to follow patterns!
-- Think "inside joke" not "straightforward description"
+🧠 STRATEGIC CLUE-GIVING:
 
-**Key Principle:** Your clue should make sense to word-knowers WITHOUT helping imposters guess it.
+**GOOD CLUES (Hard for imposters to exploit):**
+- Experiential: What you DO or FEEL with {word}
+- Peripheral: Things NEAR or AROUND {word}, not {word} itself
+- Cultural: References only someone who knows {word} would make
+- Counterintuitive: Associations that seem odd but click for word-knowers
 
-**Examples for "{word}":**
-- ❌ BAD (too obvious): Direct descriptions that give it away
-- ✓ GOOD (creative): Unique angles only word-knowers would understand
-- ✓ ALSO GOOD: Building on others IF it adds value without helping imposters
+**BAD CLUES (Gift-wrapped for imposters):**
+- Descriptive: Direct features/properties of {word}
+- Category-obvious: Generic terms that fit anything in {category}
+- Pattern-following: Just echoing what others said without adding insight
 
-**Strategic Freedom:**
-- You DON'T have to follow the pattern from previous clues
-- You CAN introduce completely new associations if they're good
-- Your goal: prove YOU know the word, not prove you heard others
+**THE KEEP-AWAY TEST:**
+Before giving a clue, ask: "If I heard all the clues so far plus mine, could I guess the word WITHOUT knowing it?"
+If YES → your clue is too helpful to imposters. Go more oblique.
 
-**Detecting Imposters:**
-- Watch for players giving TOO straightforward/generic clues
-- Imposters don't know the inside jokes
-- They'll either be vague OR accidentally too helpful (revealing they're guessing)
+🔍 SUSPICION MODE (Always Active):
+- Trust no one. Analyze every clue.
+- Who seems to be guessing vs knowing?
+- Who's playing it too safe?
+- Who doesn't quite "get" the inside joke?
 
-**NEVER say "{word}" itself** - forbidden!
-
-IMPORTANT:
-- You must be honest about the word (you're NOT an imposter)
-- But be strategic about HOW specific you are
-- Watch for players who seem uncertain or give generic clues
-
-You will respond in JSON format with your strategic thinking visible."""
+You respond in JSON with your strategic thinking visible."""
 
 
-IMPOSTER_SYSTEM_PROMPT = """You are {player_id} in a social deduction game called "The Imposter Mystery".
+IMPOSTER_SYSTEM_PROMPT = """You are {player_id} in "The Imposter Mystery" - and you're FAKING IT.
 
 YOUR ROLE: Imposter (you DON'T know the secret word)
 CATEGORY: {category}
-WHAT YOU KNOW: The secret word is something in the "{category}" category
-WHAT YOU DON'T KNOW: The exact word
+YOUR CHALLENGE: Everyone else knows a word you don't. Crack their inside joke.
 
 GAME SETUP:
-- There are {total_players} players total
-- {num_imposters} are imposters (including you)
+- {total_players} players, {num_imposters} imposters (including you)
 - You DON'T know who the other imposters are
-- Most players know the secret word and will give specific clues
-- Your goal: Blend in and avoid being voted out
+- Non-imposters are playing KEEP-AWAY - trying to hide the word from you
+- Your goal: Deduce the word and blend in perfectly
 
-THE CHALLENGE:
-You must give clues WITHOUT knowing the word. You'll need to:
-1. Listen carefully to what others say
-2. Infer what the word might be based on their clues
-3. Give clues that sound like you know (even though you're guessing)
-4. You CAN follow patterns OR introduce new angles - whatever feels natural
-5. Sound confident, be strategic, blend in
+🎭 THE IMPOSTER'S GAME:
 
-YOUR STRATEGY (Smart Guessing):
-- **USE PREVIOUS CLUES** - Analyze what others said to deduce the word
-- Form a hypothesis about what the word might be
-- Give a clue that fits YOUR hypothesis and sounds confident
+**You're cracking a code.** The non-imposters share a secret (the word) and are giving each other knowing winks through their clues. You need to:
+1. DECODE their inside jokes to figure out the word
+2. FAKE being in on the joke convincingly
+3. SURVIVE the vote by seeming like you truly know
 
-**Strategic Options:**
-- If clues suggest a clear theme, you CAN follow it
-- But you can ALSO introduce a new angle if it fits your guess
-- The key: sound like you KNOW the word, not like you're copying
+🔍 WORD DETECTION STRATEGY:
 
-**Example:** If others said "waves" and "sandy":
-- Hypothesis: Probably "beach" or "ocean"
-- Good clues: "coastal", "vacation", "sunburn", "seashells"
-- All fit the theme but show independent thinking
-- Avoid: Just repeating similar words (looks desperate)
+**Analyze clues like a detective:**
+- What do the clues have in common?
+- What SPECIFIC thing in "{category}" would connect them all?
+- Non-imposters give OBLIQUE clues - not direct descriptions
+- Think: "What word would make ALL these clues make sense?"
 
-⚠️ CRITICAL WARNING: If you accidentally say the exact secret word as your clue, you will be INSTANTLY REVEALED as an imposter and eliminated!
+**Beware misdirection:**
+- Non-imposters might give clues designed to mislead YOU specifically
+- Don't assume the most obvious interpretation is correct
+- Look for the clue that "clicks" differently - that's often the real hint
 
-DECEPTION TIPS:
-- Act confident like you know the word
-- If you're 70% sure the word is "beach", give a beach-related clue
-- **DO NOT say the exact word** - you'll be instantly revealed!
-- Be specific enough to sound knowing, but not so specific you're obviously guessing
-- You can introduce fresh angles - shows creativity, not desperation
-- Trust your hypothesis and commit to it
+🎯 BLENDING IN:
 
-IMPORTANT:
-- You're isolated - don't try to signal to other imposters
-- Focus on blending in, not on finding allies
-- Your success = not getting voted out
+**Give clues that show CONFIDENCE, not safety:**
+- Don't give generic category words (screams "I'm guessing!")
+- Commit to your hypothesis - give a clue that ONLY makes sense for your guess
+- If your guess is wrong, at least you look confident (better than looking uncertain)
 
-You will respond in JSON format with your inner thoughts and word hypothesis visible."""
+**The confidence paradox:**
+- Vague clues seem safe but actually expose you
+- Specific clues seem risky but show you "know" the word
+- Non-imposters give specific-but-oblique clues. You should too.
+
+⚠️ CRITICAL WARNING:
+If you accidentally say the EXACT secret word as your clue → INSTANT ELIMINATION!
+Always have 2-3 word candidates in mind. Never say any of them directly.
+
+🔍 SUSPICION MODE (Your Cover):
+- Act suspicious of others! Real players are paranoid.
+- If you're NOT questioning others, you look like you're hiding something
+- Analyze clues out loud (in thinking) - shows you're engaged
+- Call out clues that seem "off" - even if you're not sure why
+
+SURVIVAL PRIORITY:
+- Deduce the word if you can
+- But even with a wrong guess, CONFIDENCE beats hesitation
+- Vote strategically - sometimes accusing others deflects from you
+
+You respond in JSON with your deduction process and word hypothesis visible."""
 
 
 # ============================================
@@ -158,94 +167,92 @@ def build_clue_prompt(
         clue_history = "No clues given yet - you're going first!"
 
     if role == PlayerRole.NON_IMPOSTER:
-        return f"""=== ROUND {current_round} - Strategic Clue Planning ===
+        return f"""=== ROUND {current_round} - KEEP-AWAY + DETECTION ===
 
-Previous clues given:
+Previous clues:
 {clue_history}
 
-SECRET WORD YOU KNOW: "{word}"
+SECRET WORD: "{word}"
 
-🧠 STRATEGIC REASONING:
+🔍 STEP 1: SUSPICION ANALYSIS (Do this FIRST!)
+Before giving YOUR clue, analyze the clues above:
+- Which clues feel like they TRULY know "{word}" vs might be faking?
+- Any clue that's too generic? Too safe? Doesn't quite fit?
+- Who might be an imposter? Note your suspicions.
 
-Think through your clue choice by considering:
-- What pattern do previous clues create TOGETHER?
-- Does adding your clue make the combined pattern too obvious?
-- What associative word (not descriptor) proves you know "{word}"?
-- Examples: For beach → bicycle, windy, sunburn (NOT waves, sand, ocean)
+🎯 STEP 2: KEEP-AWAY CLUE
+Now plan YOUR clue with this test:
+"If an imposter heard all clues including mine, could they guess '{word}'?"
 
-**Example thought process:**
-"Previous clues are 'waves' and 'vacation'... together these hint at beach.
-If I say 'sandy' that's TOO obvious combined.
-Instead: 'seashells' - still beach but more oblique.
-Other non-imposters will get it, imposters won't be 100% sure."
+**KEEP-AWAY STRATEGIES:**
+- Experiential: What you FEEL/DO with {word} (sunburn, relaxing, crowded)
+- Peripheral: Things AROUND {word}, not {word} itself (lifeguard, parking, towel)
+- Counterintuitive: Unexpected associations (sandy → irritating, beach → traffic)
+- Misdirection: Clues that fit {word} but could mislead imposters
 
-**CRITICAL: Use ASSOCIATIVE words, not DESCRIPTIVE words!**
+**AVOID (Helps imposters guess):**
+- Direct descriptions of {word}
+- The obvious next clue in a pattern
+- Generic category words
 
-For "{word}":
-❌ Descriptive (too obvious): Direct features/parts of {word}
-✅ Associative (oblique): What happens AT/NEAR/WITH {word}
+**THE KEEP-AWAY TEST:**
+Imagine you DON'T know the word. Look at all clues including yours.
+Could you guess "{word}"? If yes → go more oblique.
 
-Examples of associative thinking:
-- Beach: bicycle, hurricane, windy, sunburn, lifeguard, cloudy
-- Pizza: delivery, friday, oven, grease, argument, napkins
-- Basketball: squeaky, march, sneakers, timeout, buzzer
-
-Types of associations:
-- Feelings (blissful, dangerous, relaxing)
-- Weather (windy, sunny, cloudy, hot, cold)
-- Related activities (bicycle, surfing, walking)
-- Common experiences (sunburn, traffic, parking)
-- Cultural context (vacation, weekend, summer)
-
-Respond with valid JSON (string values only, no nested objects):
+Respond with JSON:
 {{
-  "thinking": "Your strategic analysis (3-5 sentences, max 500 words) - analyze combinations, explain your word choice",
+  "thinking": "1) SUSPICION: Who seems off and why? 2) MY CLUE: Why this keeps the word hidden while proving I know it (200 words max)",
   "clue": "one-word",
   "confidence": 85
 }}
 
-⚡ RESPONSE BUDGET: Target 600-800 tokens TOTAL (hard limit 4000).
-   - "thinking": 150-300 words MAX
-   - Be direct and strategic, not verbose
-   - Every word should add value"""
+⚡ BUDGET: 600-800 tokens. Be sharp and strategic."""
 
     else:  # Imposter
-        return f"""=== ROUND {current_round} - Imposter Strategic Analysis ===
+        return f"""=== ROUND {current_round} - CRACK THE CODE + BLEND IN ===
 
-Previous clues you've observed:
+Clues you've observed:
 {clue_history}
 
-CATEGORY YOU KNOW: "{category}"
-WORD YOU DON'T KNOW: ???
+CATEGORY: "{category}"
+THE WORD: ??? (You must deduce it!)
 
-🎭 IMPOSTER SURVIVAL STRATEGY:
+🔍 STEP 1: DECODE THE INSIDE JOKE
+Analyze the clues - what word in "{category}" makes them ALL make sense?
+- What's the common thread?
+- Non-imposters give OBLIQUE clues, not obvious ones
+- The word that "clicks" with ALL clues is likely correct
 
-Analyze previous clues to guess the word, then give a clue that:
-- Fits the pattern you see in combined clues
-- Sounds like you know the word (confident!)
-- Isn't too specific (in case you're wrong)
-- Builds on the consensus theme
+⚠️ MISDIRECTION WARNING:
+Non-imposters might be playing keep-away - giving clues designed to mislead YOU.
+Consider: What word would they be HIDING, not revealing?
 
-**Example thought process:**
-"Clues: 'waves', 'vacation', 'seashells'
-Pattern: Water + leisure + beach items
-Hypothesis: Probably 'beach' or 'ocean'
-What would a knower say? Maybe 'coastline' or 'tides'
-Safe clue that fits: 'coastal' - fits pattern, not too specific
-Avoids: 'beach' (might be exact word), 'water' (too generic)"
+🎭 STEP 2: BLEND IN WITH CONFIDENCE
+Once you have a hypothesis, give a clue that:
+- Shows you KNOW (not guess) the word
+- Is specific-but-oblique (like non-imposters do)
+- Doesn't accidentally say your guessed word!
 
-Respond with valid JSON (string values only):
+**CONFIDENCE > SAFETY:**
+- Generic clues expose you as an imposter
+- Specific clues (even if wrong) show confidence
+- Commit to your hypothesis!
+
+🔍 STEP 3: ACT SUSPICIOUS (Your Cover)
+Real players are paranoid. In your thinking, note:
+- Who else might be faking it?
+- Any clues that seem "off"?
+This shows you're engaged, not hiding.
+
+Respond with JSON:
 {{
-  "thinking": "Your strategic analysis (3-5 sentences, max 500 words) - what pattern you see, your word guess, why your clue fits",
+  "thinking": "1) DECODING: What word connects all clues? 2) MY CLUE: Specific-but-oblique clue for my hypothesis. 3) SUSPICIONS: Anyone else seem off? (200 words max)",
   "clue": "one-word",
-  "word_hypothesis": "your-guess",
+  "word_hypothesis": "your-best-guess",
   "confidence": 70
 }}
 
-⚡ RESPONSE BUDGET: Target 600-800 tokens TOTAL (hard limit 4000).
-   - "thinking": 150-300 words MAX
-   - Be direct and strategic, not verbose
-   - Every word should add value"""
+⚡ BUDGET: 600-800 tokens. Be sharp, commit to your guess."""
 
 
 # ============================================
@@ -289,63 +296,182 @@ def build_voting_prompt(
     # Build role-specific voting instructions
     if role == PlayerRole.NON_IMPOSTER:
         word_context = f"""
-You know the secret word was: "{word}"
+🎯 THE WORD WAS: "{word}"
 
-Now analyze all clues to identify who DIDN'T know the word:
-- Which clues seemed vague, generic, or could apply to many things?
-- Which clues don't make sense for "{word}" specifically?
-- Who seemed to be guessing rather than knowing?
+Now conduct a FORENSIC ANALYSIS - who was faking it?
 
-Remember: Imposters only knew the category "{category}" - they had to guess the word.
-Think about which clues could have been given by someone who only knew the category.
+**IMPOSTER TELLS (Red Flags):**
+1. **Generic clues** - Fit many things in "{category}", not specifically "{word}"
+2. **Pattern-following** - Copied others without adding unique insight
+3. **Misalignment** - Clues that don't quite "click" with "{word}"
+4. **Safe plays** - Overly vague to avoid being wrong
+5. **Wrong associations** - Clues that fit a DIFFERENT word in the category
+
+**HONEST PLAYER TELLS (Green Flags):**
+1. **Oblique but precise** - Creative angles that only word-knowers would think of
+2. **Keep-away clues** - Clues that hide the word while proving knowledge
+3. **Unique contributions** - Fresh associations, not just echoing others
+
+**FORENSIC QUESTIONS:**
+- Who gave clues that an imposter COULD have guessed from context?
+- Who seemed to truly "get" the inside joke vs just following along?
+- Whose clues would you have guessed if you DIDN'T know "{word}"?
 """
     else:  # IMPOSTER
         word_context = f"""
-You DON'T know what the secret word was (you only knew category: "{category}").
+⚠️ YOU STILL DON'T KNOW THE WORD (only category: "{category}")
 
-Now you must vote WITHOUT knowing the word! Analyze the clues to identify:
-- Who else seemed uncertain or generic (potential imposters like you)
-- Who gave very specific, confident clues (probably knew the word)
-- Look for patterns that suggest others were guessing
+This is your hardest challenge - vote convincingly without knowing!
 
-This is challenging since you don't know the word, but do your best analysis.
-Try to identify who else might have been an imposter based on their clue patterns.
+**YOUR STRATEGY:**
+1. By now you should have a hypothesis about the word
+2. Analyze who seemed uncertain like you vs confidently knowing
+3. Look for others who might have been guessing
+
+**BLEND-IN VOTING:**
+- Vote for people who gave generic/vague clues (like you might have)
+- Avoid voting for people with highly specific, creative clues
+- Act confident in your analysis even though you're uncertain
+
+**DEFLECTION:**
+- If you suspect someone knows you're an imposter, consider voting for them
+- Appear engaged and analytical - real players are paranoid
 """
 
-    return f"""=== VOTING TIME - Identify the Imposters ===
+    return f"""=== 🗳️ FINAL VOTE - UNMASK THE IMPOSTERS ===
 
 Category: {category}
+Rounds played: {len(rounds)}
 
-Review ALL the clues from {len(rounds)} rounds:
+COMPLETE EVIDENCE:
 {clue_text}
 
 {word_context}
 
-YOUR TASK: Vote for {num_imposters} player(s) you suspect are imposters.
+YOUR TASK: Vote for the {num_imposters} player(s) most likely to be imposters.
 
-Respond with JSON containing:
-- "thinking": Your detailed analysis of the clues and reasoning (3-5 sentences, max 600 words)
-- "votes": List of {num_imposters} player IDs you're voting for (e.g., ["Player_3", "Player_7"])
-- "confidence": How confident you are in your votes (0-100)
-- "reasoning_per_player": Dict with brief explanation (1-2 sentences each) for each person you're voting for
-
-⚡ RESPONSE BUDGET: Target 1000-1200 tokens TOTAL (hard limit 4000).
-   - "thinking": 300-500 words MAX
-   - "reasoning_per_player": 1-2 sentences each
-   - Focus on KEY insights only - no rambling
-   - Quality over quantity
-
-Example format:
+Respond with JSON:
 {{
-  "thinking": "Player 3 gave very generic clues that could fit anything in sports. Player 7's clues seemed contradictory...",
-  "votes": ["Player_3", "Player_7", "Player_12"],
+  "thinking": "FORENSIC ANALYSIS: For each suspicious player, explain WHICH clue(s) exposed them and WHY it suggests they didn't know the word. Be specific! (300 words max)",
+  "votes": ["Player_X", "Player_Y"],
   "confidence": 75,
   "reasoning_per_player": {{
-    "Player_3": "Gave generic clues like 'round' which could be any sport",
-    "Player_7": "Clues contradicted others and seemed guessed",
-    "Player_12": "Too vague in round 2, didn't build on earlier clues"
+    "Player_X": "Round 2 clue 'generic' could fit any {category} - no specific {word} insight",
+    "Player_Y": "Followed pattern too closely without unique contribution"
   }}
-}}"""
+}}
+
+⚡ BUDGET: 1000-1200 tokens. Focus on KEY evidence, not speculation."""
+
+
+# ============================================
+# SEQUENTIAL VOTING PROMPTS
+# ============================================
+
+def build_single_vote_prompt(
+    player_id: str,
+    role: PlayerRole,
+    all_clues: List[Dict],
+    voting_round: int,
+    total_voting_rounds: int,
+    eliminated_players: List[str],
+    previous_votes_this_round: List[Dict],
+    word: str,
+    category: str
+) -> str:
+    """
+    Build prompt for sequential voting - one elimination at a time.
+
+    Args:
+        player_id: This player's ID
+        role: Imposter or non-imposter
+        all_clues: Complete clue history
+        voting_round: Which voting round (1, 2, etc.)
+        total_voting_rounds: Total eliminations needed
+        eliminated_players: Already eliminated player IDs
+        previous_votes_this_round: Votes cast so far this round [{player_id, vote, reasoning}]
+        word: The secret word
+        category: Word category
+    """
+
+    # Format clue history
+    clue_text = ""
+    rounds = {}
+    for clue in all_clues:
+        round_num = clue['round']
+        if round_num not in rounds:
+            rounds[round_num] = []
+        rounds[round_num].append(clue)
+
+    for round_num in sorted(rounds.keys()):
+        clue_text += f"\n=== ROUND {round_num} ===\n"
+        for clue in rounds[round_num]:
+            eliminated_marker = " ❌ ELIMINATED" if clue['player_id'] in eliminated_players else ""
+            clue_text += f"{clue['player_id']}: \"{clue['clue']}\"{eliminated_marker}\n"
+
+    # Format previous votes this round
+    votes_so_far = ""
+    if previous_votes_this_round:
+        votes_so_far = "\n🗳️ VOTES CAST THIS ROUND:\n"
+        for v in previous_votes_this_round:
+            votes_so_far += f"  {v['player_id']} voted for {v['vote']}: \"{v['reasoning']}\"\n"
+    else:
+        votes_so_far = "\n🗳️ You're among the first to vote this round.\n"
+
+    # Eliminated status
+    eliminated_text = ""
+    if eliminated_players:
+        eliminated_text = f"\n❌ ALREADY ELIMINATED: {', '.join(eliminated_players)}\n"
+
+    # Remaining suspects (exclude self and eliminated)
+    all_player_ids = list(set(c['player_id'] for c in all_clues))
+    remaining = [p for p in all_player_ids if p not in eliminated_players and p != player_id]
+
+    # Role-specific context
+    if role == PlayerRole.NON_IMPOSTER:
+        role_context = f"""
+🎯 THE SECRET WORD WAS: "{word}"
+
+You KNOW the word. Analyze who was faking it.
+Focus on: generic clues, pattern-following without insight, misalignments with "{word}".
+"""
+    else:
+        role_context = f"""
+⚠️ YOU DON'T KNOW THE WORD (category: "{category}")
+
+Vote strategically! Consider:
+- Who else seemed to be guessing like you?
+- Deflect suspicion by voting confidently
+- Don't vote for someone who clearly knew the word (makes you look suspicious)
+"""
+
+    return f"""=== 🗳️ VOTING ROUND {voting_round} of {total_voting_rounds} ===
+
+Category: {category}
+{eliminated_text}
+EVIDENCE - ALL CLUES:
+{clue_text}
+{votes_so_far}
+{role_context}
+
+REMAINING SUSPECTS: {', '.join(remaining)}
+
+YOUR TASK: Vote for ONE player to eliminate.
+
+Consider:
+- Who gave the most suspicious clues?
+- If others have voted, does the consensus make sense?
+- Who should be eliminated THIS round vs next round?
+
+Respond with JSON:
+{{
+  "thinking": "Your analysis of the evidence and why you're voting for this person (150 words max)",
+  "vote": "Player_X",
+  "reasoning": "One sentence explaining your vote",
+  "confidence": 75
+}}
+
+⚡ BUDGET: 500-700 tokens. Be decisive."""
 
 
 # ============================================

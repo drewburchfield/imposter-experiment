@@ -65,6 +65,33 @@ class VoteResponse(BaseModel):
     )
 
 
+class SingleVoteResponse(BaseModel):
+    """
+    Response schema for sequential voting rounds.
+    Each player votes for ONE player to eliminate per round.
+    """
+    thinking: str = Field(
+        description="Analysis and reasoning for who to vote out this round",
+        min_length=20,
+        max_length=1500
+    )
+    vote: str = Field(
+        description="Single player ID to vote for elimination (e.g., 'Player_3')",
+        min_length=1,
+        max_length=20
+    )
+    reasoning: str = Field(
+        description="Brief explanation for this vote (1-2 sentences)",
+        min_length=10,
+        max_length=300
+    )
+    confidence: int = Field(
+        description="Confidence in this vote (0-100)",
+        ge=0,
+        le=100
+    )
+
+
 class DiscussionResponse(BaseModel):
     """
     Response schema for optional discussion phase.

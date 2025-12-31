@@ -13,6 +13,7 @@ from ..ai.prompts import (
     IMPOSTER_SYSTEM_PROMPT,
     build_clue_prompt,
     build_voting_prompt,
+    build_single_vote_prompt,
     build_discussion_prompt
 )
 
@@ -156,6 +157,40 @@ class AIPlayer:
         )
 
         messages.append({"role": "user", "content": voting_prompt})
+
+        return messages
+
+    def build_single_vote_messages(
+        self,
+        all_clues: List[Dict],
+        voting_round: int,
+        total_voting_rounds: int,
+        eliminated_players: List[str],
+        previous_votes_this_round: List[Dict],
+        word: str
+    ) -> List[Dict[str, str]]:
+        """
+        Build message array for sequential voting (one elimination at a time).
+        """
+        messages = [
+            {"role": "system", "content": self.get_system_prompt()}
+        ]
+
+        messages.extend(self.conversation_history)
+
+        single_vote_prompt = build_single_vote_prompt(
+            player_id=self.player_id,
+            role=self.role,
+            all_clues=all_clues,
+            voting_round=voting_round,
+            total_voting_rounds=total_voting_rounds,
+            eliminated_players=eliminated_players,
+            previous_votes_this_round=previous_votes_this_round,
+            word=word,
+            category=self.category
+        )
+
+        messages.append({"role": "user", "content": single_vote_prompt})
 
         return messages
 

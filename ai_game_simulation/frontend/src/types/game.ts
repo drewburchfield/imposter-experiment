@@ -23,13 +23,44 @@ export interface ClueEvent {
   word_hypothesis?: string;
 }
 
-export interface VoteEvent {
+// Legacy batch voting (deprecated)
+export interface LegacyVoteEvent {
   type: 'vote';
   player_id: string;
   votes: string[];
   thinking: string;
   reasoning: Record<string, string>;
   confidence: number;
+}
+
+// New sequential voting - one player at a time
+export interface VoteEvent {
+  type: 'vote';
+  voting_round: number;
+  player_id: string;
+  vote: string;  // Single player they're voting for
+  thinking: string;
+  reasoning: string;
+  confidence: number;
+  votes_so_far: Record<string, number>;  // Running tally
+  total_votes_cast: number;  // How many players have voted so far
+  total_active_players: number;  // Total players who will vote
+}
+
+export interface VotingRoundStartEvent {
+  type: 'voting_round_start';
+  voting_round: number;
+  total_voting_rounds: number;
+  eliminated_so_far: string[];
+}
+
+export interface EliminationEvent {
+  type: 'elimination';
+  voting_round: number;
+  eliminated_player: string;
+  was_imposter: boolean;
+  vote_counts: Record<string, number>;
+  remaining_imposters: number;
 }
 
 export interface GameResult {
@@ -47,7 +78,9 @@ export type GameEvent =
   | ClueEvent
   | { type: 'round_end'; round: number }
   | { type: 'voting_start' }
+  | VotingRoundStartEvent
   | VoteEvent
+  | EliminationEvent
   | { type: 'game_complete'; result: GameResult }
   | { type: 'error'; message: string };
 

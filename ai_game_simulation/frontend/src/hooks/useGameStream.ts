@@ -73,19 +73,35 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
       return;
     }
 
-    // Calculate delay based on event type and speed
     const nextEvent = eventQueue[currentIndex];
-    let baseDelay = 1000; // 1 second default
 
-    if (nextEvent.type === 'clue') {
-      baseDelay = 4000; // 4 seconds for clues
-    } else if (nextEvent.type === 'vote') {
-      baseDelay = 3000; // 3 seconds for votes
-    } else if (nextEvent.type === 'round_start') {
-      baseDelay = 2000; // 2 seconds for transitions
+    // FIRST event displays immediately - no waiting for minimal startup delay
+    if (displayedEvents.length === 0) {
+      setDisplayedEvents([nextEvent]);
+      setCurrentIndex(1);
+      return;
     }
 
-    const adjustedDelay = baseDelay / speed;
+    // Calculate delay based on event type
+    // Speed ONLY affects content events (clues, votes) - transitions are quick
+    let delay: number;
+
+    if (nextEvent.type === 'clue') {
+      // Clues: speed-adjusted viewing time
+      delay = 4000 / speed;
+    } else if (nextEvent.type === 'vote') {
+      // Votes: speed-adjusted viewing time
+      delay = 3500 / speed;
+    } else if (nextEvent.type === 'game_complete') {
+      // Results: give users a moment to see the last vote before results
+      delay = 2000 / speed;
+    } else {
+      // Other transitions (round_start, round_end, voting_start):
+      // Fixed short delay - no waiting on dead time
+      delay = 150;
+    }
+
+    const adjustedDelay = delay;
 
     playbackTimerRef.current = setTimeout(() => {
       setDisplayedEvents(prev => [...prev, nextEvent]);
@@ -97,7 +113,7 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
         clearTimeout(playbackTimerRef.current);
       }
     };
-  }, [isPlaying, currentIndex, eventQueue, speed]);
+  }, [isPlaying, currentIndex, eventQueue, speed, displayedEvents.length]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying(prev => !prev);

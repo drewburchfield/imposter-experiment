@@ -145,12 +145,12 @@ async def stream_game(game_id: str):
     """
     Server-Sent Events stream of game progression.
 
-    Streams events as they happen:
+    Streams events IMMEDIATELY as they happen (no batching):
     - round_start
-    - clue (with player thoughts)
+    - clue (with player thoughts) - streamed as each LLM responds
     - round_end
     - voting_start
-    - vote (with analysis)
+    - vote (with analysis) - streamed as each LLM responds
     - game_complete (with results)
     """
     engine = game_sessions.get(game_id)
@@ -159,14 +159,15 @@ async def stream_game(game_id: str):
     if not engine or not history:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    event_queue = []
+    # Use async queue for real-time streaming
+    event_queue: asyncio.Queue = asyncio.Queue()
 
     async def emit_event(event):
-        """Callback to capture events from game engine"""
-        event_queue.append(event)
+        """Callback to immediately queue events for streaming"""
+        await event_queue.put(event)
 
-    async def event_generator():
-        """Generate SSE events as game progresses"""
+    async def run_game():
+        """Run the game engine and emit events"""
         try:
             # Initialize game
             await engine.initialize_game()
@@ -175,47 +176,39 @@ async def stream_game(game_id: str):
             engine.set_event_callback(emit_event)
 
             # Emit game start
-            yield f"data: {json.dumps({'type': 'game_start', 'players': [{'id': p.player_id, 'model': p.model_name} for p in engine.players]})}\n\n"
-            await asyncio.sleep(0.1)
+            await event_queue.put({
+                'type': 'game_start',
+                'players': [{'id': p.player_id, 'model': p.model_name} for p in engine.players]
+            })
 
             # Run rounds
             for round_num in range(1, engine.config.num_rounds + 1):
                 engine.current_round = round_num
 
                 # Round start
-                yield f"data: {json.dumps({'type': 'round_start', 'round': round_num, 'total_rounds': engine.config.num_rounds})}\n\n"
-                await asyncio.sleep(0.5)
+                await event_queue.put({
+                    'type': 'round_start',
+                    'round': round_num,
+                    'total_rounds': engine.config.num_rounds
+                })
 
-                # Execute clue round (will emit events via callback)
-                queue_start = len(event_queue)
+                # Execute clue round - events emitted via callback as they happen
                 await engine._execute_clue_round()
 
-                # Stream queued clue events
-                for event in event_queue[queue_start:]:
-                    yield f"data: {json.dumps(event)}\n\n"
-                    await asyncio.sleep(0.3)
-
                 # Round end
-                yield f"data: {json.dumps({'type': 'round_end', 'round': round_num})}\n\n"
-                await asyncio.sleep(0.5)
+                await event_queue.put({'type': 'round_end', 'round': round_num})
 
             # Voting
-            yield f"data: {json.dumps({'type': 'voting_start'})}\n\n"
-            await asyncio.sleep(0.5)
+            await event_queue.put({'type': 'voting_start'})
 
-            queue_start = len(event_queue)
+            # Execute voting - events emitted via callback as they happen
             await engine._execute_voting()
-
-            # Stream vote events
-            for event in event_queue[queue_start:]:
-                yield f"data: {json.dumps(event)}\n\n"
-                await asyncio.sleep(0.3)
 
             # Calculate results
             result = engine._calculate_results()
 
             # Game complete
-            result_data = {
+            await event_queue.put({
                 'type': 'game_complete',
                 'result': {
                     'word': result.word,
@@ -225,15 +218,47 @@ async def stream_game(game_id: str):
                     'detection_accuracy': result.detection_accuracy,
                     'total_rounds': result.total_rounds
                 }
-            }
-
-            yield f"data: {json.dumps(result_data)}\n\n"
+            })
 
             # Save history
-            history.save_game_result(result_data['result'])
+            history.save_game_result({
+                'word': result.word,
+                'category': result.category,
+                'actual_imposters': result.actual_imposters,
+                'eliminated_players': result.eliminated_players,
+                'detection_accuracy': result.detection_accuracy,
+                'total_rounds': result.total_rounds
+            })
 
         except Exception as e:
-            logger.exception("Error in game stream")
+            logger.exception("Error in game execution")
+            await event_queue.put({'type': 'error', 'message': str(e)})
+        finally:
+            # Signal end of stream
+            await event_queue.put(None)
+
+    async def event_generator():
+        """Generate SSE events as they arrive from the queue"""
+        # Start game in background task
+        game_task = asyncio.create_task(run_game())
+
+        try:
+            while True:
+                # Wait for next event from queue
+                event = await event_queue.get()
+
+                # None signals end of stream
+                if event is None:
+                    break
+
+                # Stream event immediately
+                yield f"data: {json.dumps(event)}\n\n"
+
+        except asyncio.CancelledError:
+            game_task.cancel()
+            raise
+        except Exception as e:
+            logger.exception("Error in event generator")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

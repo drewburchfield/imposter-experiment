@@ -4,12 +4,20 @@
  */
 
 import React, { useRef } from 'react';
-import type { ClueEvent, Player } from '../types/game';
+import type { ClueEvent, VoteEvent, EliminationEvent, Player } from '../types/game';
 import './TheaterStage.css';
 
 interface TheaterStageProps {
   currentClue: ClueEvent | null;
   allClues: ClueEvent[];
+  // Voting phase - sequential voting with eliminations
+  currentVote: VoteEvent | null;
+  allVotes: VoteEvent[];
+  allEliminations: EliminationEvent[];
+  isVotingPhase: boolean;
+  currentVotingRound: number;
+  totalVotingRounds: number;
+  // Core game state
   players: Player[];
   currentRound: number;
   totalRounds: number;
@@ -21,11 +29,19 @@ interface TheaterStageProps {
   isViewingHistory: boolean;
   onSelectEvent: (index: number) => void;
   onGoToLive: () => void;
+  // Game completion
+  gameComplete?: boolean;
 }
 
 export const TheaterStage: React.FC<TheaterStageProps> = ({
   currentClue,
   allClues,
+  currentVote,
+  allVotes,
+  allEliminations,
+  isVotingPhase,
+  currentVotingRound,
+  totalVotingRounds,
   players,
   currentRound,
   totalRounds,
@@ -34,7 +50,8 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   selectedEventIndex,
   isViewingHistory,
   onSelectEvent,
-  onGoToLive
+  onGoToLive,
+  gameComplete
 }) => {
   // Determine which clue to show in spotlight
   // If viewing history, show the selected clue; otherwise show the latest
@@ -42,8 +59,14 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
     ? allClues[selectedEventIndex] || null
     : currentClue;
 
-  const currentPlayer = displayedClue
+  const cluePlayer = displayedClue
     ? players.find(p => p.id === displayedClue.player_id)
+    : null;
+
+  // Voting phase: determine which vote to display
+  const displayedVote = currentVote;
+  const votePlayer = displayedVote
+    ? players.find(p => p.id === displayedVote.player_id)
     : null;
 
   // Ref for timeline scroll container
@@ -66,17 +89,103 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
           </div>
         )}
 
-        {displayedClue && currentPlayer ? (
+        {/* VOTING PHASE: Show vote deliberation - sequential voting */}
+        {isVotingPhase && displayedVote && votePlayer ? (
+          <div className="player-performance voting">
+            {/* Player info header */}
+            <div className="performance-header">
+              <div className="player-badge">
+                <div className="player-avatar-large voting">
+                  {votePlayer.id.slice(-1)}
+                </div>
+                <div className="player-details">
+                  <div className="player-name">{votePlayer.id}</div>
+                  <div className="player-model">{votePlayer.model}</div>
+                  <div className="round-indicator voting">
+                    🗳️ Voting Round {displayedVote.voting_round} of {totalVotingRounds}
+                  </div>
+                </div>
+              </div>
+
+              {/* Confidence meter */}
+              <div className="confidence-display">
+                <div className="confidence-label">{displayedVote.confidence}% confident</div>
+                <div className="confidence-bar">
+                  <div
+                    className="confidence-fill voting"
+                    style={{ width: `${displayedVote.confidence}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* The single vote - who they're voting to eliminate */}
+            <div className="vote-spotlight">
+              <div className="vote-label">Voting to eliminate:</div>
+              <div className="vote-target">
+                <span className="target-name">{displayedVote.vote}</span>
+              </div>
+              <div className="vote-reasoning">{displayedVote.reasoning}</div>
+            </div>
+
+            {/* Running vote tally */}
+            {displayedVote.votes_so_far && Object.keys(displayedVote.votes_so_far).length > 0 && (
+              <div className="vote-tally">
+                <div className="tally-label">
+                  Current Vote Tally ({displayedVote.total_votes_cast || '?'} of {displayedVote.total_active_players || '?'} votes):
+                </div>
+                <div className="tally-list">
+                  {Object.entries(displayedVote.votes_so_far)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([playerId, count]) => (
+                      <div key={playerId} className="tally-item">
+                        <span className="tally-player">{playerId}</span>
+                        <span className="tally-count">{count} vote{count !== 1 ? 's' : ''}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* The thinking - deliberation process */}
+            <div className="thinking-display voting">
+              <div className="thinking-label">🗳️ Deliberation:</div>
+              <div className="thinking-text">
+                {displayedVote.thinking}
+              </div>
+            </div>
+          </div>
+        ) : isVotingPhase && !displayedVote ? (
+          /* Voting started but no votes yet */
+          <div className="waiting-state">
+            <div className="waiting-icon pulse">🗳️</div>
+            <div className="waiting-title">Voting Phase</div>
+            <div className="waiting-context">
+              <div className="context-item">
+                <span className="context-label">Category:</span>
+                <span className="context-value">{category}</span>
+              </div>
+              <div className="context-item">
+                <span className="context-label">Secret Word:</span>
+                <span className="context-value secret">{word}</span>
+              </div>
+            </div>
+            <div className="waiting-subtitle">AI agents are analyzing clues and deciding who to eliminate...</div>
+            <div className="thinking-dots">
+              <span>.</span><span>.</span><span>.</span>
+            </div>
+          </div>
+        ) : displayedClue && cluePlayer ? (
           <div className={`player-performance ${displayedClue.role}`}>
             {/* Player info header */}
             <div className="performance-header">
               <div className="player-badge">
                 <div className="player-avatar-large">
-                  {currentPlayer.id.slice(-1)}
+                  {cluePlayer.id.slice(-1)}
                 </div>
                 <div className="player-details">
-                  <div className="player-name">{currentPlayer.id}</div>
-                  <div className="player-model">{currentPlayer.model}</div>
+                  <div className="player-name">{cluePlayer.id}</div>
+                  <div className="player-model">{cluePlayer.model}</div>
                   <div className="round-indicator">Round {displayedClue.round}</div>
                 </div>
               </div>
@@ -123,7 +232,32 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         ) : (
           <div className="waiting-state">
             {/* Contextual loading based on game phase */}
-            {currentRound === 0 ? (
+            {gameComplete ? (
+              // Game is complete - show summary prompt
+              <>
+                <div className="waiting-icon celebration">🏆</div>
+                <div className="waiting-title">Game Complete!</div>
+                <div className="waiting-context">
+                  <div className="context-item">
+                    <span className="context-label">Category:</span>
+                    <span className="context-value">{category}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Secret Word:</span>
+                    <span className="context-value secret">{word}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Rounds Played:</span>
+                    <span className="context-value">{totalRounds}</span>
+                  </div>
+                </div>
+                <div className="waiting-subtitle">
+                  Click "Show Results" to see who the imposters were!
+                  <br />
+                  Use the timeline to review game history.
+                </div>
+              </>
+            ) : currentRound === 0 ? (
               // Game initializing - no round_start yet
               <>
                 <div className="waiting-icon pulse">🎭</div>
@@ -183,6 +317,82 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         </div>
 
         <div className="timeline-scroll" ref={timelineScrollRef}>
+          {/* Voting section - grouped by voting round with eliminations */}
+          {(allVotes.length > 0 || allEliminations.length > 0) && (() => {
+            // Group votes by voting round
+            const votesByRound: { [round: number]: typeof allVotes } = {};
+            allVotes.forEach(vote => {
+              if (!votesByRound[vote.voting_round]) {
+                votesByRound[vote.voting_round] = [];
+              }
+              votesByRound[vote.voting_round].push(vote);
+            });
+
+            // Get voting rounds sorted descending (newest first)
+            const votingRounds = Object.keys(votesByRound).map(Number).sort((a, b) => b - a);
+
+            return votingRounds.map(votingRound => {
+              const elimination = allEliminations.find(e => e.voting_round === votingRound);
+
+              return (
+                <div key={`voting-round-${votingRound}`} className="timeline-round-block voting-block">
+                  <div className="timeline-round-header current-round voting">
+                    <span className="round-line" />
+                    <span className="round-label">🗳️ Voting Round {votingRound}</span>
+                    <span className="round-line" />
+                  </div>
+
+                  {/* Elimination reveal (if this round is complete) */}
+                  {elimination && (
+                    <div className={`timeline-item elimination ${elimination.was_imposter ? 'caught' : 'innocent'}`}>
+                      <div className="timeline-marker">{elimination.was_imposter ? '🎭' : '❌'}</div>
+                      <div className="timeline-content">
+                        <div className="timeline-meta">
+                          <span className="timeline-player">{elimination.eliminated_player}</span>
+                          <span className={`elimination-badge ${elimination.was_imposter ? 'imposter' : 'innocent'}`}>
+                            {elimination.was_imposter ? 'IMPOSTER!' : 'Innocent'}
+                          </span>
+                        </div>
+                        <div className="timeline-clue">
+                          Eliminated with {elimination.vote_counts[elimination.eliminated_player]} votes
+                        </div>
+                        {elimination.remaining_imposters > 0 && (
+                          <div className="remaining-imposters">
+                            {elimination.remaining_imposters} imposter{elimination.remaining_imposters !== 1 ? 's' : ''} remain
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Individual votes in this round */}
+                  {votesByRound[votingRound].map((vote, index) => {
+                    const isLatest = votingRound === currentVotingRound &&
+                                     index === votesByRound[votingRound].length - 1 &&
+                                     !isViewingHistory && !elimination;
+                    return (
+                      <div
+                        key={`vote-${votingRound}-${index}`}
+                        className={`timeline-item voting ${isLatest ? 'current' : ''}`}
+                      >
+                        <div className="timeline-marker">🗳️</div>
+                        <div className="timeline-content">
+                          <div className="timeline-meta">
+                            <span className="timeline-player">{vote.player_id}</span>
+                            <span className="timeline-round">→ {vote.vote}</span>
+                          </div>
+                          <div className="timeline-clue timeline-vote-reason">
+                            {vote.reasoning}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            });
+          })()}
+
           {/* Group clues by round, then display rounds in descending order (newest first) */}
           {(() => {
             // Group clues by round, keeping track of original indices
@@ -249,7 +459,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
             {players.map(player => (
               <div
                 key={player.id}
-                className={`player-chip ${currentPlayer?.id === player.id ? 'active' : ''}`}
+                className={`player-chip ${(cluePlayer?.id === player.id || votePlayer?.id === player.id) ? 'active' : ''}`}
               >
                 <div className="chip-avatar">{player.id.slice(-1)}</div>
                 <div className="chip-label">{player.id}</div>

@@ -3,18 +3,19 @@
  * Real-time observation of AI agents playing social deduction game.
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { GameControls } from './components/GameControls';
 import { TheaterStage } from './components/TheaterStage';
 import { ImposterReveal } from './components/ImposterReveal';
 import { useGameStream } from './hooks/useGameStream';
 import { API_BASE_URL } from './config/api';
-import type { Player, ClueEvent } from './types/game';
+import type { Player, ClueEvent, VoteEvent, EliminationEvent } from './types/game';
 import './App.css';
 
 function App() {
   const [gameId, setGameId] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
 
   // Game configuration
   const [config, setConfig] = useState({
@@ -51,21 +52,30 @@ function App() {
   const gameState: {
     players: Player[];
     clues: ClueEvent[];
+    votes: VoteEvent[];
+    eliminations: EliminationEvent[];
     currentRound: number;
+    currentVotingRound: number;
+    totalVotingRounds: number;
     currentSpeaker: string | undefined;
+    isVotingPhase: boolean;
     result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null;
   } = useMemo(() => {
     const players: Player[] = [];
     const clues: ClueEvent[] = [];
+    const votes: VoteEvent[] = [];
+    const eliminations: EliminationEvent[] = [];
     let currentRound = 0;
+    let currentVotingRound = 0;
+    let totalVotingRounds = 0;
     let currentSpeaker: string | undefined;
+    let isVotingPhase = false;
     let result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } | null = null;
 
     events.forEach(event => {
       switch (event.type) {
         case 'game_start':
           players.push(...event.players);
-          // setGameStarted moved to useEffect above
           break;
 
         case 'round_start':
@@ -77,13 +87,31 @@ function App() {
           currentSpeaker = event.player_id;
           break;
 
+        case 'voting_start':
+          isVotingPhase = true;
+          break;
+
+        case 'voting_round_start':
+          currentVotingRound = event.voting_round;
+          totalVotingRounds = event.total_voting_rounds;
+          break;
+
+        case 'vote':
+          votes.push(event as VoteEvent);
+          currentSpeaker = event.player_id;
+          break;
+
+        case 'elimination':
+          eliminations.push(event as EliminationEvent);
+          break;
+
         case 'game_complete':
           result = event.result;
           break;
       }
     });
 
-    return { players, clues, currentRound, currentSpeaker, result };
+    return { players, clues, votes, eliminations, currentRound, currentVotingRound, totalVotingRounds, currentSpeaker, isVotingPhase, result };
   }, [events]);
 
   // Keyboard navigation
@@ -109,7 +137,9 @@ function App() {
           break;
         case 'Escape':
           e.preventDefault();
-          if (isViewingHistory) {
+          if (showResultsModal) {
+            setShowResultsModal(false);
+          } else if (isViewingHistory) {
             goToLive();
           }
           break;
@@ -118,7 +148,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, stepPrev, stepNext, goToLive, isViewingHistory]);
+  }, [togglePlay, stepPrev, stepNext, goToLive, isViewingHistory, showResultsModal]);
 
   const startGame = async () => {
     try {
@@ -135,6 +165,13 @@ function App() {
       alert('Failed to create game. Is the backend running?');
     }
   };
+
+  // Reset everything for a new game
+  const startNewGame = useCallback(() => {
+    setGameId(null);
+    setGameStarted(false);
+    setShowResultsModal(false);
+  }, []);
 
   return (
     <div className="app">
@@ -207,30 +244,56 @@ function App() {
             totalRounds={config.num_rounds}
             onTogglePlay={togglePlay}
             onSpeedChange={setSpeed}
+            gameComplete={!!gameState.result}
+            onShowResults={() => setShowResultsModal(true)}
+            onNewGame={startNewGame}
           />
 
-          {gameState.result ? (
-            <ImposterReveal
-              imposters={gameState.result.actual_imposters}
-              eliminated={gameState.result.eliminated_players}
-              players={gameState.players}
-              detectionAccuracy={gameState.result.detection_accuracy}
-              word={config.word}
-            />
-          ) : (
-            <TheaterStage
-              currentClue={gameState.clues[gameState.clues.length - 1] || null}
-              allClues={gameState.clues}
-              players={gameState.players}
-              currentRound={gameState.currentRound}
-              totalRounds={config.num_rounds}
-              word={config.word}
-              category={config.category}
-              selectedEventIndex={selectedEventIndex}
-              isViewingHistory={isViewingHistory}
-              onSelectEvent={selectEvent}
-              onGoToLive={goToLive}
-            />
+          <TheaterStage
+            currentClue={gameState.clues[gameState.clues.length - 1] || null}
+            allClues={gameState.clues}
+            allVotes={gameState.votes}
+            currentVote={gameState.votes[gameState.votes.length - 1] || null}
+            allEliminations={gameState.eliminations}
+            isVotingPhase={gameState.isVotingPhase}
+            currentVotingRound={gameState.currentVotingRound}
+            totalVotingRounds={gameState.totalVotingRounds}
+            players={gameState.players}
+            currentRound={gameState.currentRound}
+            totalRounds={config.num_rounds}
+            word={config.word}
+            category={config.category}
+            selectedEventIndex={selectedEventIndex}
+            isViewingHistory={isViewingHistory}
+            onSelectEvent={selectEvent}
+            onGoToLive={goToLive}
+            gameComplete={!!gameState.result}
+          />
+
+          {/* Results Modal */}
+          {showResultsModal && gameState.result && (
+            <div className="results-modal-overlay" onClick={() => setShowResultsModal(false)}>
+              <div className="results-modal" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close-btn" onClick={() => setShowResultsModal(false)}>
+                  ✕
+                </button>
+                <ImposterReveal
+                  imposters={gameState.result.actual_imposters}
+                  eliminated={gameState.result.eliminated_players}
+                  players={gameState.players}
+                  detectionAccuracy={gameState.result.detection_accuracy}
+                  word={config.word}
+                />
+                <div className="modal-actions">
+                  <button className="modal-new-game-btn" onClick={startNewGame}>
+                    🎭 New Game
+                  </button>
+                  <button className="modal-dismiss-btn" onClick={() => setShowResultsModal(false)}>
+                    Review Game History
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}

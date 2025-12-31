@@ -13,6 +13,9 @@ interface GameControlsProps {
   totalRounds: number;
   onTogglePlay: () => void;
   onSpeedChange: (speed: number) => void;
+  gameComplete?: boolean;
+  onShowResults?: () => void;
+  onNewGame?: () => void;
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({
@@ -21,7 +24,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
   currentRound,
   totalRounds,
   onTogglePlay,
-  onSpeedChange
+  onSpeedChange,
+  gameComplete,
+  onShowResults,
+  onNewGame
 }) => {
   const speedOptions = [0.25, 0.5, 1, 2, 4];
 
@@ -54,6 +60,18 @@ export const GameControls: React.FC<GameControlsProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Game complete actions */}
+      {gameComplete && (
+        <div className="control-section game-complete-actions">
+          <button className="show-results-btn" onClick={onShowResults}>
+            🏆 Show Results
+          </button>
+          <button className="new-game-btn" onClick={onNewGame}>
+            🎭 New Game
+          </button>
+        </div>
+      )}
     </div>
   );
 };

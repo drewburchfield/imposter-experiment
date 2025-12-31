@@ -11,7 +11,7 @@ from enum import Enum, auto
 from collections import defaultdict
 
 from .player import AIPlayer, GameContext, PlayerKnowledge
-from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse
+from ..ai.schemas import PlayerRole, ClueResponse, VoteResponse, SingleVoteResponse
 from .validation import validate_clue, check_win_condition, resolve_vote_tie, ValidationResult
 
 logger = logging.getLogger(__name__)
@@ -106,10 +106,21 @@ class ClueRecord:
 
 @dataclass
 class VoteRecord:
-    """Record of a vote"""
+    """Record of a vote (legacy - for batch voting)"""
     player_id: str
     voted_for: List[str]
     reasoning: Dict[str, str]
+    thinking: str
+    confidence: int
+
+
+@dataclass
+class SingleVoteRecord:
+    """Record of a single vote in sequential voting"""
+    voting_round: int
+    player_id: str
+    voted_for: str
+    reasoning: str
     thinking: str
     confidence: int
 
@@ -149,7 +160,8 @@ class GameEngine:
 
         # Game history
         self.all_clues: List[ClueRecord] = []
-        self.all_votes: List[VoteRecord] = []
+        self.all_votes: List[VoteRecord] = []  # Legacy batch votes
+        self.sequential_votes: List[SingleVoteRecord] = []  # New sequential votes
         self.eliminated_players: List[str] = []
 
         # Event callback for streaming
@@ -432,78 +444,169 @@ class GameEngine:
         pass
 
     async def _execute_voting(self):
-        """All players vote for suspected imposters"""
+        """
+        Sequential voting: One elimination per voting round.
+        Repeat for each imposter to be eliminated.
+        """
 
         if self.visual_mode and CLI_DISPLAY_AVAILABLE:
             print_voting_header()
 
-        # Prepare voting requests
-        requests = []
-        for player in self.players:
-            messages = player.build_voting_messages(
-                all_clues=self._get_clue_dicts(),
-                word=self.config.word
-            )
-            requests.append({
-                "messages": messages,
-                "model": get_model_id(player.model_name),
-                "temperature": 0.5,
-                "max_tokens": 5000
-            })
+        total_voting_rounds = self.config.num_imposters
 
-        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
-            print(f"\n{Colors.DIM}🤖 All players analyzing {len(self.all_clues)} clues...{Colors.RESET}")
-
-        responses = await self.openrouter.batch_call(
-            requests,
-            response_format=VoteResponse
-        )
-
-        if self.visual_mode and CLI_DISPLAY_AVAILABLE:
-            print(f"{Colors.SUCCESS}✓ Votes received{Colors.RESET}\n")
-            pause(1.0)
-
-        # Process votes
-        for player, response in zip(self.players, responses):
-            if isinstance(response, Exception):
-                logger.error(f"{player.player_id} voting failed: {response}")
-                response = VoteResponse(
-                    thinking="[API_ERROR] Language model failed to generate valid voting response. Using empty vote as fallback to continue game.",
-                    votes=[],
-                    confidence=0,
-                    reasoning_per_player={"fallback": "API error occurred"}
-                )
-
-            vote_record = VoteRecord(
-                player_id=player.player_id,
-                voted_for=response.votes,
-                reasoning=response.reasoning_per_player or {},
-                thinking=response.thinking,
-                confidence=response.confidence
-            )
-            self.all_votes.append(vote_record)
-            player.record_vote(response)
-
-            # Emit event for streaming
+        for voting_round in range(1, total_voting_rounds + 1):
+            # Emit voting round start
             if self.event_callback:
                 await self.event_callback({
-                    'type': 'vote',
-                    'player_id': player.player_id,
-                    'votes': response.votes,
-                    'thinking': response.thinking,
-                    'reasoning': response.reasoning_per_player,
-                    'confidence': response.confidence
+                    'type': 'voting_round_start',
+                    'voting_round': voting_round,
+                    'total_voting_rounds': total_voting_rounds,
+                    'eliminated_so_far': self.eliminated_players.copy()
                 })
 
-            # Visual display (CLI only)
             if self.visual_mode and CLI_DISPLAY_AVAILABLE:
-                print_vote(
-                    player_id=player.player_id,
-                    votes=response.votes,
-                    thinking=response.thinking,
-                    reasoning=response.reasoning_per_player,
-                    pause_time=3.0
+                print(f"\n{'='*60}")
+                print(f"VOTING ROUND {voting_round} of {total_voting_rounds}")
+                print(f"{'='*60}")
+                if self.eliminated_players:
+                    print(f"Already eliminated: {', '.join(self.eliminated_players)}")
+
+            # Get active players (not eliminated)
+            active_players = [p for p in self.players if p.player_id not in self.eliminated_players]
+            logger.info(f"Voting round {voting_round}: {len(active_players)} active players: {[p.player_id for p in active_players]}")
+
+            # Collect votes for this round - SEQUENTIALLY so players can see prior votes
+            votes_this_round: List[Dict] = []
+            vote_counts: Dict[str, int] = defaultdict(int)
+
+            for player in active_players:
+                logger.info(f"Getting vote from {player.player_id}...")
+                # Build messages with context of votes cast so far
+                messages = player.build_single_vote_messages(
+                    all_clues=self._get_clue_dicts(),
+                    voting_round=voting_round,
+                    total_voting_rounds=total_voting_rounds,
+                    eliminated_players=self.eliminated_players,
+                    previous_votes_this_round=votes_this_round,
+                    word=self.config.word
                 )
+
+                if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                    pause(0.5, f"{player.player_id} is deliberating...")
+
+                # Call LLM for this player's vote
+                try:
+                    response = await self.openrouter.call(
+                        messages=messages,
+                        model=get_model_id(player.model_name),
+                        response_format=SingleVoteResponse,
+                        temperature=0.5,
+                        max_tokens=2000
+                    )
+                except Exception as e:
+                    logger.error(f"{player.player_id} voting failed: {e}")
+                    # Fallback: vote for random non-eliminated player
+                    candidates = [p.player_id for p in active_players if p.player_id != player.player_id]
+                    fallback_vote = candidates[0] if candidates else "abstain"
+                    response = SingleVoteResponse(
+                        thinking="[API_ERROR] Vote failed, using fallback.",
+                        vote=fallback_vote,
+                        reasoning="API error - fallback vote",
+                        confidence=0
+                    )
+
+                # Validate vote target exists and isn't eliminated
+                vote_target = response.vote
+                valid_targets = [p.player_id for p in active_players if p.player_id != player.player_id]
+                if vote_target not in valid_targets:
+                    # Invalid vote - pick first valid target
+                    vote_target = valid_targets[0] if valid_targets else "abstain"
+
+                # Record the vote
+                vote_record = SingleVoteRecord(
+                    voting_round=voting_round,
+                    player_id=player.player_id,
+                    voted_for=vote_target,
+                    reasoning=response.reasoning,
+                    thinking=response.thinking,
+                    confidence=response.confidence
+                )
+                self.sequential_votes.append(vote_record)
+
+                # Track for this round
+                votes_this_round.append({
+                    'player_id': player.player_id,
+                    'vote': vote_target,
+                    'reasoning': response.reasoning
+                })
+                vote_counts[vote_target] += 1
+
+                # Emit event for streaming
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'vote',
+                        'voting_round': voting_round,
+                        'player_id': player.player_id,
+                        'vote': vote_target,
+                        'thinking': response.thinking,
+                        'reasoning': response.reasoning,
+                        'confidence': response.confidence,
+                        'votes_so_far': dict(vote_counts),
+                        'total_votes_cast': len(votes_this_round),
+                        'total_active_players': len(active_players)
+                    })
+
+                if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                    print(f"{player.player_id} votes for {vote_target}: {response.reasoning}")
+                    pause(1.0)
+
+            # Tally votes and determine elimination
+            if vote_counts:
+                max_votes = max(vote_counts.values())
+                tied_players = [p for p, v in vote_counts.items() if v == max_votes]
+
+                if len(tied_players) > 1:
+                    # Tie - use tie-breaker
+                    eliminated = resolve_vote_tie(tied_players)
+                    logger.info(f"Vote tie between {tied_players}, eliminated: {eliminated}")
+                else:
+                    eliminated = tied_players[0]
+
+                self.eliminated_players.append(eliminated)
+
+                # Check if eliminated player was an imposter
+                eliminated_player = next((p for p in self.players if p.player_id == eliminated), None)
+                was_imposter = eliminated_player.role == PlayerRole.IMPOSTER if eliminated_player else False
+
+                # Emit elimination event
+                if self.event_callback:
+                    await self.event_callback({
+                        'type': 'elimination',
+                        'voting_round': voting_round,
+                        'eliminated_player': eliminated,
+                        'was_imposter': was_imposter,
+                        'vote_counts': dict(vote_counts),
+                        'remaining_imposters': self._count_remaining_imposters()
+                    })
+
+                if self.visual_mode and CLI_DISPLAY_AVAILABLE:
+                    role_reveal = "🎭 IMPOSTER!" if was_imposter else "✓ Innocent"
+                    print(f"\n{'='*40}")
+                    print(f"ELIMINATED: {eliminated} - {role_reveal}")
+                    print(f"Votes: {dict(vote_counts)}")
+                    print(f"{'='*40}")
+                    pause(2.0)
+
+                # Check win condition after elimination
+                win_check = self._check_win_condition()
+                if win_check.game_over:
+                    logger.info(f"Game over: {win_check.reason}")
+                    break
+
+    def _count_remaining_imposters(self) -> int:
+        """Count imposters not yet eliminated"""
+        all_imposters = [p.player_id for p in self.players if p.role == PlayerRole.IMPOSTER]
+        return len([i for i in all_imposters if i not in self.eliminated_players])
 
     def _check_win_condition(self):
         """Check if game should end based on eliminations"""
