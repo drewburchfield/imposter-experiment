@@ -1,89 +1,92 @@
 .game-controls {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 0 30px rgba(58, 134, 255, 0.1);
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-cyan);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 1rem auto;
+  margin: var(--space-1) auto;
   max-width: 1800px;
-  width: calc(100% - 4rem);
+  width: calc(100% - var(--space-4));
 }
 
 .control-section {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--space-2);
 }
 
 .play-pause-btn {
-  background: linear-gradient(135deg, #06ffa5, #00d9ff);
-  color: #0a0a0f;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-family: 'Space Mono', monospace;
+  background: var(--color-bg-void);
+  color: var(--color-neon-green);
+  border: 2px solid var(--color-neon-green);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.15em;
+  box-shadow: var(--shadow-green);
 }
 
 .play-pause-btn:hover {
-  box-shadow: 0 0 20px rgba(6, 255, 165, 0.6);
+  background: var(--color-neon-green);
+  color: var(--color-bg-void);
+  box-shadow: 0 0 25px rgba(6, 255, 165, 0.6);
   transform: translateY(-2px);
 }
 
 .round-indicator {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: #3a86ff;
-  padding: 8px 16px;
-  background: rgba(58, 134, 255, 0.1);
-  border-radius: 8px;
-  border: 1px solid rgba(58, 134, 255, 0.3);
+  color: var(--color-neon-cyan);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(0, 217, 255, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neon-cyan);
 }
 
 .speed-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--space-1);
 }
 
 .speed-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #8b8b9a;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-family: 'Space Mono', monospace;
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border-glass);
+  color: var(--color-text-muted);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .speed-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(58, 134, 255, 0.3);
-  color: #3a86ff;
+  background: var(--color-bg-panel-hover);
+  border-color: var(--color-neon-cyan);
+  color: var(--color-neon-cyan);
 }
 
 .speed-btn.active {
-  background: rgba(58, 134, 255, 0.2);
-  color: #3a86ff;
-  border-color: #3a86ff;
-  box-shadow: 0 0 15px rgba(58, 134, 255, 0.3);
+  background: rgba(0, 217, 255, 0.15);
+  color: var(--color-neon-cyan);
+  border-color: var(--color-neon-cyan);
+  box-shadow: var(--shadow-cyan);
 }
 
 label {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.9rem;
-  color: #8b8b9a;
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
 }
