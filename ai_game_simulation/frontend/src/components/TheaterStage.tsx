@@ -3,7 +3,7 @@
  * "Watch the AI take the stage" - one player spotlight at a time
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import type { ClueEvent, Player } from '../types/game';
 import './TheaterStage.css';
 
@@ -13,6 +13,9 @@ interface TheaterStageProps {
   players: Player[];
   currentRound: number;
   totalRounds: number;
+  // Game context for loading states
+  word: string;
+  category: string;
   // History navigation
   selectedEventIndex: number | null;
   isViewingHistory: boolean;
@@ -26,6 +29,8 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   players,
   currentRound,
   totalRounds,
+  word,
+  category,
   selectedEventIndex,
   isViewingHistory,
   onSelectEvent,
@@ -41,24 +46,8 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
     ? players.find(p => p.id === displayedClue.player_id)
     : null;
 
-  // Refs for auto-scrolling timeline to latest round
+  // Ref for timeline scroll container
   const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const latestRoundRef = useRef<HTMLDivElement>(null);
-  const lastScrolledRound = useRef<number>(0);
-
-  // Auto-scroll to latest round header when a new round starts
-  useEffect(() => {
-    if (currentRound > lastScrolledRound.current && !isViewingHistory) {
-      lastScrolledRound.current = currentRound;
-      // Small delay to ensure DOM has updated
-      setTimeout(() => {
-        latestRoundRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 100);
-    }
-  }, [currentRound, isViewingHistory]);
 
   return (
     <div className="theater-stage">
@@ -133,8 +122,55 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
           </div>
         ) : (
           <div className="waiting-state">
-            <div className="waiting-icon">⏳</div>
-            <div className="waiting-text">Waiting for next player...</div>
+            {/* Contextual loading based on game phase */}
+            {currentRound === 0 ? (
+              // Game initializing - no round_start yet
+              <>
+                <div className="waiting-icon pulse">🎭</div>
+                <div className="waiting-title">Game Starting...</div>
+                <div className="waiting-context">
+                  <div className="context-item">
+                    <span className="context-label">Category:</span>
+                    <span className="context-value">{category}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Secret Word:</span>
+                    <span className="context-value secret">{word}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Players:</span>
+                    <span className="context-value">{players.length > 0 ? players.length : '...'}</span>
+                  </div>
+                </div>
+                <div className="waiting-subtitle">Assigning roles to AI agents...</div>
+              </>
+            ) : allClues.filter(c => c.round === currentRound).length === 0 ? (
+              // Round started but no clues yet in this round
+              <>
+                <div className="waiting-icon pulse">💭</div>
+                <div className="waiting-title">Round {currentRound} Starting</div>
+                <div className="waiting-context">
+                  <div className="context-item">
+                    <span className="context-label">Category:</span>
+                    <span className="context-value">{category}</span>
+                  </div>
+                  <div className="context-item">
+                    <span className="context-label">Secret Word:</span>
+                    <span className="context-value secret">{word}</span>
+                  </div>
+                </div>
+                <div className="waiting-subtitle">AI agents are thinking of clues...</div>
+                <div className="thinking-dots">
+                  <span>.</span><span>.</span><span>.</span>
+                </div>
+              </>
+            ) : (
+              // Between players in a round
+              <>
+                <div className="waiting-icon">⏳</div>
+                <div className="waiting-title">Waiting for next player...</div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -147,52 +183,63 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         </div>
 
         <div className="timeline-scroll" ref={timelineScrollRef}>
-          {allClues.map((clue, index) => {
-            const isImposter = clue.role === 'imposter';
-            const isSelected = selectedEventIndex === index;
-            const isLatest = index === allClues.length - 1 && !isViewingHistory;
-            const prevClue = index > 0 ? allClues[index - 1] : null;
-            const isNewRound = !prevClue || prevClue.round !== clue.round;
-            const isLatestRound = clue.round === currentRound && isNewRound;
+          {/* Group clues by round, then display rounds in descending order (newest first) */}
+          {(() => {
+            // Group clues by round, keeping track of original indices
+            const cluesByRound: { [round: number]: { clue: typeof allClues[0]; originalIndex: number }[] } = {};
+            allClues.forEach((clue, index) => {
+              if (!cluesByRound[clue.round]) {
+                cluesByRound[clue.round] = [];
+              }
+              cluesByRound[clue.round].push({ clue, originalIndex: index });
+            });
 
-            return (
-              <React.Fragment key={index}>
-                {/* Round divider */}
-                {isNewRound && (
-                  <div
-                    className="timeline-round-header"
-                    ref={isLatestRound ? latestRoundRef : undefined}
-                  >
-                    <span className="round-line" />
-                    <span className="round-label">Round {clue.round}</span>
-                    <span className="round-line" />
-                  </div>
-                )}
+            // Get rounds sorted descending (newest first)
+            const rounds = Object.keys(cluesByRound).map(Number).sort((a, b) => b - a);
 
-                <div
-                  className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${isSelected ? 'selected' : ''} ${isLatest ? 'current' : ''}`}
-                  onClick={() => onSelectEvent(index)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && onSelectEvent(index)}
-                >
-                  <div className="timeline-marker">
-                    {isSelected ? '👁' : isImposter ? '🎭' : '✓'}
-                  </div>
-                  <div className="timeline-content">
-                    <div className="timeline-meta">
-                      <span className="timeline-player">{clue.player_id}</span>
-                      <span className="timeline-round">R{clue.round}</span>
-                    </div>
-                    <div className="timeline-clue">"{clue.clue}"</div>
-                    {clue.role === 'imposter' && clue.word_hypothesis && (
-                      <div className="timeline-guess">→ {clue.word_hypothesis}</div>
-                    )}
-                  </div>
+            return rounds.map(round => (
+              <div key={round} className="timeline-round-block">
+                {/* Round header */}
+                <div className={`timeline-round-header ${round === currentRound ? 'current-round' : ''}`}>
+                  <span className="round-line" />
+                  <span className="round-label">Round {round}</span>
+                  <span className="round-line" />
                 </div>
-              </React.Fragment>
-            );
-          })}
+
+                {/* Clues within this round (chronological order) */}
+                {cluesByRound[round].map(({ clue, originalIndex }) => {
+                  const isImposter = clue.role === 'imposter';
+                  const isSelected = selectedEventIndex === originalIndex;
+                  const isLatest = originalIndex === allClues.length - 1 && !isViewingHistory;
+
+                  return (
+                    <div
+                      key={originalIndex}
+                      className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${isSelected ? 'selected' : ''} ${isLatest ? 'current' : ''}`}
+                      onClick={() => onSelectEvent(originalIndex)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && onSelectEvent(originalIndex)}
+                    >
+                      <div className="timeline-marker">
+                        {isSelected ? '👁' : isImposter ? '🎭' : '✓'}
+                      </div>
+                      <div className="timeline-content">
+                        <div className="timeline-meta">
+                          <span className="timeline-player">{clue.player_id}</span>
+                          <span className="timeline-round">R{clue.round}</span>
+                        </div>
+                        <div className="timeline-clue">"{clue.clue}"</div>
+                        {clue.role === 'imposter' && clue.word_hypothesis && (
+                          <div className="timeline-guess">→ {clue.word_hypothesis}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ));
+          })()}
         </div>
 
         {/* Player gallery */}

@@ -116,6 +116,105 @@
   color: var(--color-text-secondary);
 }
 
+/* Enhanced waiting states */
+.waiting-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-neon-cyan);
+  margin-bottom: var(--space-3);
+  text-shadow: var(--shadow-cyan);
+}
+
+.waiting-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-top: var(--space-2);
+}
+
+.waiting-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.context-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.context-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.context-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.context-value.secret {
+  color: var(--color-neon-pink);
+  text-shadow: var(--shadow-pink);
+}
+
+/* Pulse animation for loading icons */
+.waiting-icon.pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(0, 217, 255, 0.3));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 40px rgba(0, 217, 255, 0.6));
+  }
+}
+
+/* Animated thinking dots */
+.thinking-dots {
+  font-size: 2rem;
+  color: var(--color-neon-cyan);
+  margin-top: var(--space-2);
+}
+
+.thinking-dots span {
+  animation: dot-bounce 1.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+.thinking-dots span:nth-child(1) { animation-delay: 0s; }
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  40% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
 /* Player performance card */
 .player-performance {
   width: 100%;
@@ -406,6 +505,15 @@
   padding-right: var(--space-1);
 }
 
+/* Round blocks - groups clues by round */
+.timeline-round-block {
+  margin-bottom: var(--space-2);
+}
+
+.timeline-round-block:first-child .timeline-round-header {
+  margin-top: 0;
+}
+
 /* Round header dividers */
 .timeline-round-header {
   display: flex;
@@ -414,20 +522,28 @@
   margin: var(--space-2) 0 var(--space-1) 0;
 }
 
-.timeline-round-header:first-child {
-  margin-top: 0;
+.timeline-round-header.current-round .round-label {
+  background: rgba(0, 217, 255, 0.2);
+  border-color: var(--color-neon-cyan);
+  color: var(--color-neon-cyan);
+  box-shadow: var(--shadow-cyan);
+}
+
+.timeline-round-header.current-round .round-line {
+  background: linear-gradient(90deg, transparent, var(--color-neon-cyan), transparent);
+  height: 2px;
 }
 
 .round-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-neon-cyan), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-border-subtle), transparent);
 }
 
 .round-label {
   font-family: var(--font-display);
   font-size: 0.75rem;
-  color: var(--color-neon-cyan);
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.2em;
   white-space: nowrap;
@@ -435,6 +551,7 @@
   background: var(--color-bg-panel);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border-subtle);
+  transition: all 0.3s ease;
 }
 
 /* Custom scrollbar */

@@ -224,6 +224,8 @@ function App() {
               players={gameState.players}
               currentRound={gameState.currentRound}
               totalRounds={config.num_rounds}
+              word={config.word}
+              category={config.category}
               selectedEventIndex={selectedEventIndex}
               isViewingHistory={isViewingHistory}
               onSelectEvent={selectEvent}
