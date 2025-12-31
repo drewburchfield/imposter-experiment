@@ -80,9 +80,15 @@ class GameSession(BaseModel):
 # ENDPOINTS
 # ============================================
 
-@app.get("/")
-async def root():
-    """Health check"""
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for fly.io"""
+    return {"status": "healthy"}
+
+
+@app.get("/api/status")
+async def api_status():
+    """API status info"""
     return {
         "app": "Imposter Mystery AI Game",
         "version": "2.0.0",
@@ -284,3 +290,51 @@ async def list_games(limit: int = 10):
 
 # Import for SSE (need these in scope)
 from ..ai.schemas import ClueResponse, VoteResponse
+
+
+# ============================================
+# STATIC FILE SERVING
+# ============================================
+
+# Serve static frontend files in production
+# The frontend is built to /app/frontend/dist in the Docker container
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+
+if frontend_dist.exists():
+    # Mount static assets (JS, CSS, etc.)
+    app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
+
+    # Serve index.html for root and all unmatched routes (SPA routing)
+    @app.get("/")
+    async def serve_spa():
+        """Serve the React SPA"""
+        index_file = frontend_dist / "index.html"
+        return HTMLResponse(content=index_file.read_text())
+
+    @app.get("/{full_path:path}")
+    async def serve_spa_fallback(full_path: str):
+        """Fallback for client-side routing"""
+        # Don't intercept API routes
+        if full_path.startswith("api/") or full_path == "health":
+            raise HTTPException(status_code=404)
+
+        # Try to serve static file first
+        file_path = frontend_dist / full_path
+        if file_path.exists() and file_path.is_file():
+            return HTMLResponse(content=file_path.read_text())
+
+        # Fallback to index.html for client-side routing
+        index_file = frontend_dist / "index.html"
+        return HTMLResponse(content=index_file.read_text())
+else:
+    # Development mode - no frontend build
+    @app.get("/")
+    async def root():
+        """Development mode placeholder"""
+        return {
+            "app": "Imposter Mystery AI Game",
+            "version": "2.0.0",
+            "status": "running",
+            "mode": "development",
+            "note": "Frontend not built. Run 'npm run build' in frontend/ directory."
+        }

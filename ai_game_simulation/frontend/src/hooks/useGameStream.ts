@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../config/api';
 import type { GameEvent } from '../types/game';
 
 interface UseGameStreamResult {
@@ -30,7 +31,7 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     if (!gameId) return;
 
     const eventSource = new EventSource(
-      `http://localhost:9001/api/game/${gameId}/stream`
+      `${API_BASE_URL}/api/game/${gameId}/stream`
     );
 
     eventSource.onmessage = (event) => {

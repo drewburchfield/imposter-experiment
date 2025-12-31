@@ -8,6 +8,7 @@ import { GameControls } from './components/GameControls';
 import { TheaterStage } from './components/TheaterStage';
 import { ImposterReveal } from './components/ImposterReveal';
 import { useGameStream } from './hooks/useGameStream';
+import { API_BASE_URL } from './config/api';
 import type { Player, ClueEvent } from './types/game';
 import './App.css';
 
@@ -73,36 +74,9 @@ function App() {
     return { players, clues, currentRound, currentSpeaker, result };
   }, [events]);
 
-  // Thoughts for inner monologue
-  const thoughts = useMemo(() => {
-    return events
-      .filter(e => e.type === 'clue' || e.type === 'vote')
-      .map((e, idx) => {
-        if (e.type === 'clue') {
-          return {
-            playerId: e.player_id,
-            thinking: e.thinking,
-            type: 'clue' as const,
-            confidence: e.confidence,
-            timestamp: Date.now() - (events.length - idx) * 1000
-          };
-        } else if (e.type === 'vote') {
-          return {
-            playerId: e.player_id,
-            thinking: e.thinking,
-            type: 'vote' as const,
-            confidence: e.confidence,
-            timestamp: Date.now() - (events.length - idx) * 1000
-          };
-        }
-        return null;
-      })
-      .filter((t): t is NonNullable<typeof t> => t !== null);
-  }, [events]);
-
   const startGame = async () => {
     try {
-      const response = await fetch('http://localhost:9001/api/game/create', {
+      const response = await fetch(`${API_BASE_URL}/api/game/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)

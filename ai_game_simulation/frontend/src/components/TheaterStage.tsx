@@ -101,7 +101,6 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
 
         <div className="timeline-scroll">
           {allClues.map((clue, index) => {
-            const player = players.find(p => p.id === clue.player_id);
             const isImposter = clue.role === 'imposter';
 
             return (
