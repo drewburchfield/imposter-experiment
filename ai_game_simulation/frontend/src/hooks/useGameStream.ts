@@ -1,6 +1,9 @@
 /**
  * Custom hook for SSE game streaming with playback control.
  * Manages event queue, speed-controlled playback, and history navigation.
+ *
+ * Key feature: LLM calls run ahead of UI playback. Speed controls viewing time
+ * between content events (clues/votes), independent of how fast LLM responds.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -21,6 +24,13 @@ interface UseGameStreamResult {
   goToLive: () => void;
   stepPrev: () => void;
   stepNext: () => void;
+  // Buffer status
+  isBuffering: boolean;
+}
+
+// Check if event is a "content" event that should have speed-controlled pacing
+function isContentEvent(event: GameEvent): boolean {
+  return event.type === 'clue' || event.type === 'vote' || event.type === 'elimination';
 }
 
 export function useGameStream(gameId: string | null): UseGameStreamResult {
@@ -33,11 +43,17 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   // History navigation state
   const [selectedEventIndex, setSelectedEventIndex] = useState<number | null>(null);
 
+  // Track when last content event was displayed (for pacing)
+  const lastContentDisplayTimeRef = useRef<number>(0);
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const playbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Derived state: are we viewing history vs live?
   const isViewingHistory = selectedEventIndex !== null;
+
+  // Are we waiting for more events from the buffer?
+  const isBuffering = isPlaying && currentIndex >= eventQueue.length && eventQueue.length > 0;
 
   // Connect to SSE stream
   useEffect(() => {
@@ -65,6 +81,8 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   }, [gameId]);
 
   // Playback control - process queue at controlled speed
+  // Key: content events are paced relative to LAST content event display time,
+  // not relative to when they arrived. This lets LLM run ahead.
   useEffect(() => {
     if (!isPlaying || currentIndex >= eventQueue.length) {
       if (playbackTimerRef.current) {
@@ -74,39 +92,54 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     }
 
     const nextEvent = eventQueue[currentIndex];
+    const now = Date.now();
 
-    // FIRST event displays immediately - no waiting for minimal startup delay
+    // FIRST event displays immediately
     if (displayedEvents.length === 0) {
+      if (isContentEvent(nextEvent)) {
+        lastContentDisplayTimeRef.current = now;
+      }
       setDisplayedEvents([nextEvent]);
       setCurrentIndex(1);
       return;
     }
 
     // Calculate delay based on event type
-    // Speed ONLY affects content events (clues, votes) - transitions are quick
     let delay: number;
 
     if (nextEvent.type === 'clue') {
-      // Clues: speed-adjusted viewing time
-      delay = 4000 / speed;
+      // Clues: speed-adjusted viewing time, scheduled from last content event
+      const baseDelay = 4000 / speed;
+      const targetTime = lastContentDisplayTimeRef.current + baseDelay;
+      delay = Math.max(0, targetTime - now);
     } else if (nextEvent.type === 'vote') {
       // Votes: speed-adjusted viewing time
-      delay = 3500 / speed;
+      const baseDelay = 3500 / speed;
+      const targetTime = lastContentDisplayTimeRef.current + baseDelay;
+      delay = Math.max(0, targetTime - now);
+    } else if (nextEvent.type === 'elimination') {
+      // Eliminations: dramatic pause
+      const baseDelay = 3000 / speed;
+      const targetTime = lastContentDisplayTimeRef.current + baseDelay;
+      delay = Math.max(0, targetTime - now);
     } else if (nextEvent.type === 'game_complete') {
-      // Results: give users a moment to see the last vote before results
-      delay = 2000 / speed;
+      // Results: give users a moment to see the last content
+      const baseDelay = 2000 / speed;
+      const targetTime = lastContentDisplayTimeRef.current + baseDelay;
+      delay = Math.max(0, targetTime - now);
     } else {
-      // Other transitions (round_start, round_end, voting_start):
-      // Fixed short delay - no waiting on dead time
-      delay = 150;
+      // Transitions (round_start, round_end, voting_start, player_thinking):
+      // Show immediately - these provide progress feedback
+      delay = 50;
     }
 
-    const adjustedDelay = delay;
-
     playbackTimerRef.current = setTimeout(() => {
+      if (isContentEvent(nextEvent)) {
+        lastContentDisplayTimeRef.current = Date.now();
+      }
       setDisplayedEvents(prev => [...prev, nextEvent]);
       setCurrentIndex(prev => prev + 1);
-    }, adjustedDelay);
+    }, delay);
 
     return () => {
       if (playbackTimerRef.current) {
@@ -167,6 +200,8 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
     selectEvent,
     goToLive,
     stepPrev,
-    stepNext
+    stepNext,
+    // Buffer status
+    isBuffering
   };
 }

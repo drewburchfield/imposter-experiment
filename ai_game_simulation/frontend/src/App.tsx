@@ -37,8 +37,35 @@ function App() {
     selectEvent,
     goToLive,
     stepPrev,
-    stepNext
+    stepNext,
+    isBuffering
   } = useGameStream(gameId);
+
+  // Separate vote selection (votes are inspectable like clues)
+  const [selectedVoteIndex, setSelectedVoteIndex] = useState<number | null>(null);
+
+  // When selecting a vote, clear clue selection and vice versa
+  const selectVote = useCallback((index: number) => {
+    setSelectedVoteIndex(index);
+    // Clear clue selection - votes take precedence
+    if (selectedEventIndex !== null) {
+      goToLive(); // This clears clue selection
+    }
+  }, [selectedEventIndex, goToLive]);
+
+  const selectClue = useCallback((index: number) => {
+    setSelectedVoteIndex(null); // Clear vote selection
+    selectEvent(index);
+  }, [selectEvent]);
+
+  // Clear vote selection when going to live
+  const handleGoToLive = useCallback(() => {
+    setSelectedVoteIndex(null);
+    goToLive();
+  }, [goToLive]);
+
+  // Combined history viewing state
+  const isViewingAnyHistory = isViewingHistory || selectedVoteIndex !== null;
 
   // Derive game state from events
   // Handle game start separately to avoid setState in useMemo
@@ -157,8 +184,8 @@ function App() {
           e.preventDefault();
           if (showResultsModal) {
             setShowResultsModal(false);
-          } else if (isViewingHistory) {
-            goToLive();
+          } else if (isViewingAnyHistory) {
+            handleGoToLive();
           }
           break;
       }
@@ -166,7 +193,7 @@ function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, stepPrev, stepNext, goToLive, isViewingHistory, showResultsModal]);
+  }, [togglePlay, stepPrev, stepNext, handleGoToLive, isViewingAnyHistory, showResultsModal]);
 
   const startGame = async () => {
     try {
@@ -282,11 +309,14 @@ function App() {
             totalRounds={config.num_rounds}
             word={config.word}
             category={config.category}
-            selectedEventIndex={selectedEventIndex}
-            isViewingHistory={isViewingHistory}
-            onSelectEvent={selectEvent}
-            onGoToLive={goToLive}
+            selectedClueIndex={selectedEventIndex}
+            selectedVoteIndex={selectedVoteIndex}
+            isViewingHistory={isViewingAnyHistory}
+            onSelectClue={selectClue}
+            onSelectVote={selectVote}
+            onGoToLive={handleGoToLive}
             gameComplete={!!gameState.result}
+            isBuffering={isBuffering}
           />
 
           {/* Results Modal */}

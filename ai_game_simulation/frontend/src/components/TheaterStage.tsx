@@ -26,13 +26,18 @@ interface TheaterStageProps {
   // Game context for loading states
   word: string;
   category: string;
-  // History navigation
-  selectedEventIndex: number | null;
+  // History navigation - clues
+  selectedClueIndex: number | null;
+  // History navigation - votes (now inspectable like clues)
+  selectedVoteIndex: number | null;
   isViewingHistory: boolean;
-  onSelectEvent: (index: number) => void;
+  onSelectClue: (index: number) => void;
+  onSelectVote: (index: number) => void;
   onGoToLive: () => void;
   // Game completion
   gameComplete?: boolean;
+  // Buffer status
+  isBuffering?: boolean;
 }
 
 export const TheaterStage: React.FC<TheaterStageProps> = ({
@@ -50,16 +55,19 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   totalRounds,
   word,
   category,
-  selectedEventIndex,
+  selectedClueIndex,
+  selectedVoteIndex,
   isViewingHistory,
-  onSelectEvent,
+  onSelectClue,
+  onSelectVote,
   onGoToLive,
-  gameComplete
+  gameComplete,
+  isBuffering
 }) => {
   // Determine which clue to show in spotlight
-  // If viewing history, show the selected clue; otherwise show the latest
-  const displayedClue = isViewingHistory && selectedEventIndex !== null
-    ? allClues[selectedEventIndex] || null
+  // If viewing clue history, show the selected clue; otherwise show the latest
+  const displayedClue = selectedClueIndex !== null
+    ? allClues[selectedClueIndex] || null
     : currentClue;
 
   const cluePlayer = displayedClue
@@ -67,10 +75,17 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
     : null;
 
   // Voting phase: determine which vote to display
-  const displayedVote = currentVote;
+  // If viewing vote history, show the selected vote; otherwise show the latest
+  const displayedVote = selectedVoteIndex !== null
+    ? allVotes[selectedVoteIndex] || null
+    : currentVote;
+
   const votePlayer = displayedVote
     ? players.find(p => p.id === displayedVote.player_id)
     : null;
+
+  // Are we viewing a selected vote from history?
+  const isViewingVoteHistory = selectedVoteIndex !== null;
 
   // Ref for timeline scroll container
   const timelineScrollRef = useRef<HTMLDivElement>(null);
@@ -84,7 +99,10 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
           <div className="history-indicator">
             <span className="history-badge">⏮ Viewing History</span>
             <span className="history-position">
-              {selectedEventIndex !== null ? selectedEventIndex + 1 : 0} / {allClues.length}
+              {isViewingVoteHistory
+                ? `Vote ${selectedVoteIndex !== null ? selectedVoteIndex + 1 : 0} / ${allVotes.length}`
+                : `Clue ${selectedClueIndex !== null ? selectedClueIndex + 1 : 0} / ${allClues.length}`
+              }
             </span>
             <button className="return-to-live-btn" onClick={onGoToLive}>
               Return to Live →
@@ -92,8 +110,8 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
           </div>
         )}
 
-        {/* VOTING PHASE: Show vote deliberation - sequential voting */}
-        {isVotingPhase && displayedVote && votePlayer ? (
+        {/* VOTING PHASE or viewing vote history: Show vote deliberation */}
+        {(isVotingPhase || isViewingVoteHistory) && displayedVote && votePlayer ? (
           <div className="player-performance voting">
             {/* Player info header */}
             <div className="performance-header">
@@ -362,13 +380,13 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         <div className="timeline-scroll" ref={timelineScrollRef}>
           {/* Voting section - grouped by voting round with eliminations */}
           {(allVotes.length > 0 || allEliminations.length > 0) && (() => {
-            // Group votes by voting round
-            const votesByRound: { [round: number]: typeof allVotes } = {};
-            allVotes.forEach(vote => {
+            // Group votes by voting round, keeping track of original indices
+            const votesByRound: { [round: number]: { vote: typeof allVotes[0]; originalIndex: number }[] } = {};
+            allVotes.forEach((vote, index) => {
               if (!votesByRound[vote.voting_round]) {
                 votesByRound[vote.voting_round] = [];
               }
-              votesByRound[vote.voting_round].push(vote);
+              votesByRound[vote.voting_round].push({ vote, originalIndex: index });
             });
 
             // Get voting rounds sorted descending (newest first)
@@ -408,17 +426,22 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                     </div>
                   )}
 
-                  {/* Individual votes in this round */}
-                  {votesByRound[votingRound].map((vote, index) => {
+                  {/* Individual votes in this round - CLICKABLE */}
+                  {votesByRound[votingRound].map(({ vote, originalIndex }) => {
+                    const isSelected = selectedVoteIndex === originalIndex;
                     const isLatest = votingRound === currentVotingRound &&
-                                     index === votesByRound[votingRound].length - 1 &&
+                                     originalIndex === allVotes.length - 1 &&
                                      !isViewingHistory && !elimination;
                     return (
                       <div
-                        key={`vote-${votingRound}-${index}`}
-                        className={`timeline-item voting ${isLatest ? 'current' : ''}`}
+                        key={`vote-${votingRound}-${originalIndex}`}
+                        className={`timeline-item voting ${isLatest ? 'current' : ''} ${isSelected ? 'selected' : ''}`}
+                        onClick={() => onSelectVote(originalIndex)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && onSelectVote(originalIndex)}
                       >
-                        <div className="timeline-marker">🗳️</div>
+                        <div className="timeline-marker">{isSelected ? '👁' : '🗳️'}</div>
                         <div className="timeline-content">
                           <div className="timeline-meta">
                             <span className="timeline-player">{vote.player_id}</span>
@@ -459,20 +482,20 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                   <span className="round-line" />
                 </div>
 
-                {/* Clues within this round (chronological order) */}
+                {/* Clues within this round (chronological order) - CLICKABLE */}
                 {cluesByRound[round].map(({ clue, originalIndex }) => {
                   const isImposter = clue.role === 'imposter';
-                  const isSelected = selectedEventIndex === originalIndex;
+                  const isSelected = selectedClueIndex === originalIndex;
                   const isLatest = originalIndex === allClues.length - 1 && !isViewingHistory;
 
                   return (
                     <div
                       key={originalIndex}
                       className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${isSelected ? 'selected' : ''} ${isLatest ? 'current' : ''}`}
-                      onClick={() => onSelectEvent(originalIndex)}
+                      onClick={() => onSelectClue(originalIndex)}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && onSelectEvent(originalIndex)}
+                      onKeyDown={(e) => e.key === 'Enter' && onSelectClue(originalIndex)}
                     >
                       <div className="timeline-marker">
                         {isSelected ? '👁' : isImposter ? '🎭' : '✓'}
