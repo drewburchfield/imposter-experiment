@@ -1147,10 +1147,6 @@
   .timeline-sidebar {
     max-height: 300px;
   }
-
-  .clue-word-massive {
-    font-size: 3.5rem;
-  }
 }
 
 @media (max-width: 768px) {
@@ -1185,7 +1181,7 @@
     position: relative;
   }
 
-  /* Sidebar toggle button - fixed bottom-right */
+  /* Sidebar toggle button - fixed bottom-right, above sidebar overlay */
   .sidebar-toggle-btn {
     display: flex;
     align-items: center;
@@ -1193,7 +1189,7 @@
     position: fixed;
     bottom: var(--space-2);
     right: var(--space-2);
-    z-index: 100;
+    z-index: 250; /* Must be above sidebar (z-index: 200) */
     background: var(--color-bg-void);
     border: 2px solid var(--color-neon-cyan);
     border-radius: var(--radius-md);

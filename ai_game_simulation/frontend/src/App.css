@@ -9,8 +9,6 @@ body {
   background: var(--color-bg-space);
   color: var(--color-text-primary);
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
 }
 
 .app {
@@ -54,7 +52,6 @@ body {
   border-radius: var(--radius-md);
   padding: var(--space-4);
   box-shadow: var(--shadow-cyan);
-  box-sizing: border-box;
 }
 
 .game-setup h2 {
@@ -274,7 +271,7 @@ body {
   overflow: hidden; /* No scrolling - fit everything above fold */
   box-shadow:
     0 0 60px rgba(255, 0, 110, 0.3),
-    var(--shadow-glow-magenta);
+    var(--shadow-magenta);
   animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -339,7 +336,7 @@ body {
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: var(--shadow-glow-magenta);
+  box-shadow: var(--shadow-magenta);
 }
 
 .modal-new-game-btn:hover {
