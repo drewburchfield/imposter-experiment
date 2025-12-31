@@ -157,3 +157,67 @@ label {
   box-shadow: 0 0 25px rgba(0, 217, 255, 0.6);
   transform: translateY(-2px);
 }
+
+/* ============================================ */
+/* MOBILE LAYOUT - Phones only (480px and below) */
+/* ============================================ */
+
+@media (max-width: 480px) {
+  .game-controls {
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    width: 100%;
+    margin: var(--space-1) 0;
+  }
+
+  .control-section {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Speed buttons - 3-column grid */
+  .speed-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-1);
+    width: 100%;
+  }
+
+  .speed-btn {
+    min-height: var(--touch-target-min);
+    padding: var(--space-1);
+    font-size: 0.85rem;
+  }
+
+  /* Make primary buttons full width */
+  .play-pause-btn {
+    width: 100%;
+    min-height: var(--touch-target-min);
+  }
+
+  .round-indicator {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Game complete actions - stack vertically */
+  .game-complete-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .show-results-btn,
+  .new-game-btn {
+    width: 100%;
+    min-height: var(--touch-target-min);
+  }
+
+  /* Speed label */
+  label {
+    width: 100%;
+    text-align: center;
+    margin-bottom: var(--space-1);
+  }
+}

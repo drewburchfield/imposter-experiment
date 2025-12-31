@@ -44,6 +44,9 @@
   --radius-sm: 8px;
   --radius-md: 16px;
 
+  /* Mobile Touch */
+  --touch-target-min: 44px;
+
   /* Shadows - Neon Glow */
   --shadow-cyan: 0 0 20px rgba(0, 217, 255, 0.4);
   --shadow-magenta: 0 0 20px rgba(255, 0, 110, 0.4);
@@ -145,6 +148,22 @@ button:focus,
 button:focus-visible {
   outline: 2px solid var(--color-neon-cyan);
   outline-offset: 2px;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  button:hover {
+    /* Disable hover transform on touch devices */
+    transform: none;
+    box-shadow: none;
+  }
+
+  button:active {
+    /* Enhanced tactile feedback for touch */
+    transform: scale(0.97);
+    background: var(--color-bg-panel-hover);
+    border-color: var(--color-neon-cyan);
+  }
 }
 
 @media (prefers-color-scheme: light) {

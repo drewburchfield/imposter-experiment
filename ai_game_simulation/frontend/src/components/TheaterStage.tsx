@@ -3,7 +3,7 @@
  * "Watch the AI take the stage" - one player spotlight at a time
  */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import type { ClueEvent, VoteEvent, EliminationEvent, Player } from '../types/game';
 import './TheaterStage.css';
 
@@ -86,6 +86,9 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
 
   // Ref for timeline scroll container
   const timelineScrollRef = useRef<HTMLDivElement>(null);
+
+  // Mobile sidebar toggle state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="theater-stage">
@@ -367,8 +370,19 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
         )}
       </div>
 
+      {/* Mobile sidebar toggle button */}
+      <button
+        className="sidebar-toggle-btn"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? 'Close timeline' : 'Open timeline'}
+        aria-expanded={sidebarOpen}
+      >
+        <span className="toggle-icon">{sidebarOpen ? '✕' : '📜'}</span>
+        <span className="toggle-text">{sidebarOpen ? 'Close' : 'History'}</span>
+      </button>
+
       {/* Timeline sidebar - condensed history */}
-      <div className="timeline-sidebar">
+      <div className={`timeline-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="timeline-header">
           <h3>📜 Game History</h3>
           <div className="round-progress">Round {currentRound} / {totalRounds}</div>
@@ -433,7 +447,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                       <div
                         key={`vote-${votingRound}-${originalIndex}`}
                         className={`timeline-item voting ${isLatest ? 'current' : ''} ${isSelected ? 'selected' : ''}`}
-                        onClick={() => onSelectVote(originalIndex)}
+                        onClick={() => { onSelectVote(originalIndex); setSidebarOpen(false); }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => e.key === 'Enter' && onSelectVote(originalIndex)}
@@ -489,7 +503,7 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
                     <div
                       key={originalIndex}
                       className={`timeline-item ${isImposter ? 'imposter' : 'normal'} ${isSelected ? 'selected' : ''} ${isLatest ? 'current' : ''}`}
-                      onClick={() => onSelectClue(originalIndex)}
+                      onClick={() => { onSelectClue(originalIndex); setSidebarOpen(false); }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => e.key === 'Enter' && onSelectClue(originalIndex)}

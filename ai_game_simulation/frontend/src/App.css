@@ -153,6 +153,73 @@ body {
   }
 }
 
+/* Mobile layout - phones only */
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .game-setup {
+    margin: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .game-setup h2 {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .setup-form {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .form-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+  }
+
+  .form-group label {
+    min-width: auto;
+    text-align: left;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: var(--space-2);
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    min-height: var(--touch-target-min);
+  }
+
+  .start-btn {
+    padding: var(--space-2) var(--space-3);
+    min-height: var(--touch-target-min);
+    margin-top: var(--space-2);
+  }
+
+  /* Results modal mobile */
+  .results-modal {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    padding: var(--space-2);
+    margin: 0;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-new-game-btn,
+  .modal-dismiss-btn {
+    width: 100%;
+    min-height: var(--touch-target-min);
+  }
+}
+
 .left-panel, .center-panel, .right-panel {
   display: flex;
   flex-direction: column;

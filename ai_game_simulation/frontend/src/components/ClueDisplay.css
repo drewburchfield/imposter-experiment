@@ -1,34 +1,38 @@
 .clue-display {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--color-bg-panel);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-cyan);
   max-height: 400px;
   overflow-y: auto;
 }
 
 .clue-display h3 {
   margin-top: 0;
-  margin-bottom: 15px;
-  color: #2d3748;
+  margin-bottom: var(--space-2);
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .clue-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-2);
 }
 
 .clue-item {
-  background: #f7fafc;
-  border-left: 4px solid #4ecdc4;
-  border-radius: 8px;
-  padding: 12px;
+  background: var(--color-bg-void);
+  border-left: 4px solid var(--color-neon-cyan);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
   animation: fadeIn 0.3s ease;
 }
 
 .clue-item.imposter {
-  border-left-color: #ff6b6b;
+  border-left-color: var(--color-neon-magenta);
 }
 
 @keyframes fadeIn {
@@ -39,49 +43,50 @@
 .clue-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-1);
 }
 
 .clue-player {
   font-weight: 600;
-  color: #2d3748;
+  color: var(--color-text-primary);
+  font-family: var(--font-display);
 }
 
 .clue-round {
   font-size: 0.85rem;
-  color: #718096;
+  color: var(--color-text-muted);
 }
 
 .clue-text {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #4a5568;
-  margin: 8px 0;
+  color: var(--color-text-secondary);
+  margin: var(--space-1) 0;
 }
 
 .word-guess {
   font-size: 0.85rem;
-  color: #d69e2e;
+  color: var(--color-neon-yellow);
   font-style: italic;
   margin-top: 4px;
 }
 
 .clue-thinking {
-  margin-top: 8px;
+  margin-top: var(--space-1);
 }
 
 .clue-thinking summary {
   cursor: pointer;
-  color: #4299e1;
+  color: var(--color-neon-cyan);
   font-size: 0.85rem;
 }
 
 .clue-thinking p {
-  margin-top: 8px;
-  padding: 8px;
-  background: white;
-  border-radius: 4px;
+  margin-top: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-bg-panel);
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
-  color: #4a5568;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
