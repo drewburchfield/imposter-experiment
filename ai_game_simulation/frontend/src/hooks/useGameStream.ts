@@ -27,7 +27,7 @@ export function useGameStream(gameId: string | null): UseGameStreamResult {
   const [eventQueue, setEventQueue] = useState<GameEvent[]>([]);
   const [displayedEvents, setDisplayedEvents] = useState<GameEvent[]>([]);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [speed, setSpeed] = useState(1.0);
+  const [speed, setSpeed] = useState(0.5);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // History navigation state

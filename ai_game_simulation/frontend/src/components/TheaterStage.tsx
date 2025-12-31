@@ -3,7 +3,7 @@
  * "Watch the AI take the stage" - one player spotlight at a time
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import type { ClueEvent, Player } from '../types/game';
 import './TheaterStage.css';
 
@@ -40,6 +40,25 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
   const currentPlayer = displayedClue
     ? players.find(p => p.id === displayedClue.player_id)
     : null;
+
+  // Refs for auto-scrolling timeline to latest round
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const latestRoundRef = useRef<HTMLDivElement>(null);
+  const lastScrolledRound = useRef<number>(0);
+
+  // Auto-scroll to latest round header when a new round starts
+  useEffect(() => {
+    if (currentRound > lastScrolledRound.current && !isViewingHistory) {
+      lastScrolledRound.current = currentRound;
+      // Small delay to ensure DOM has updated
+      setTimeout(() => {
+        latestRoundRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [currentRound, isViewingHistory]);
 
   return (
     <div className="theater-stage">
@@ -127,19 +146,23 @@ export const TheaterStage: React.FC<TheaterStageProps> = ({
           <div className="round-progress">Round {currentRound} / {totalRounds}</div>
         </div>
 
-        <div className="timeline-scroll">
+        <div className="timeline-scroll" ref={timelineScrollRef}>
           {allClues.map((clue, index) => {
             const isImposter = clue.role === 'imposter';
             const isSelected = selectedEventIndex === index;
             const isLatest = index === allClues.length - 1 && !isViewingHistory;
             const prevClue = index > 0 ? allClues[index - 1] : null;
             const isNewRound = !prevClue || prevClue.round !== clue.round;
+            const isLatestRound = clue.round === currentRound && isNewRound;
 
             return (
               <React.Fragment key={index}>
                 {/* Round divider */}
                 {isNewRound && (
-                  <div className="timeline-round-header">
+                  <div
+                    className="timeline-round-header"
+                    ref={isLatestRound ? latestRoundRef : undefined}
+                  >
                     <span className="round-line" />
                     <span className="round-label">Round {clue.round}</span>
                     <span className="round-line" />
