@@ -4,10 +4,8 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { PlayerCircle } from './components/PlayerCircle';
-import { InnerMonologue } from './components/InnerMonologue';
 import { GameControls } from './components/GameControls';
-import { ClueDisplay } from './components/ClueDisplay';
+import { TheaterStage } from './components/TheaterStage';
 import { ImposterReveal } from './components/ImposterReveal';
 import { useGameStream } from './hooks/useGameStream';
 import type { Player, ClueEvent } from './types/game';
@@ -191,34 +189,23 @@ function App() {
             onSpeedChange={setSpeed}
           />
 
-          <div className="game-layout">
-            <div className="left-panel">
-              <ClueDisplay clues={gameState.clues} />
-            </div>
-
-            <div className="center-panel">
-              <PlayerCircle
-                players={gameState.players}
-                currentSpeaker={gameState.currentSpeaker}
-                revealedRoles={!!gameState.result}
-              />
-              {gameState.result && (
-                <ImposterReveal
-                  imposters={gameState.result.actual_imposters}
-                  eliminated={gameState.result.eliminated_players}
-                  players={gameState.players}
-                  detectionAccuracy={gameState.result.detection_accuracy}
-                  word={config.word}
-                />
-              )}
-            </div>
-
-            <div className="right-panel">
-              <InnerMonologue
-                thoughts={thoughts}
-              />
-            </div>
-          </div>
+          {gameState.result ? (
+            <ImposterReveal
+              imposters={gameState.result.actual_imposters}
+              eliminated={gameState.result.eliminated_players}
+              players={gameState.players}
+              detectionAccuracy={gameState.result.detection_accuracy}
+              word={config.word}
+            />
+          ) : (
+            <TheaterStage
+              currentClue={gameState.clues[gameState.clues.length - 1] || null}
+              allClues={gameState.clues}
+              players={gameState.players}
+              currentRound={gameState.currentRound}
+              totalRounds={config.num_rounds}
+            />
+          )}
         </>
       )}
     </div>
