@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="maskGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff006e"/>
+      <stop offset="50%" style="stop-color:#8338ec"/>
+      <stop offset="100%" style="stop-color:#3a86ff"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#0a0a14"/>
+  <!-- Mask shape -->
+  <path d="M20 40 Q50 25 80 40 Q85 50 80 55 Q70 60 60 55 L50 60 L40 55 Q30 60 20 55 Q15 50 20 40 Z"
+        fill="url(#maskGradient)"
+        filter="url(#glow)"/>
+  <!-- Eye holes -->
+  <ellipse cx="35" cy="45" rx="8" ry="6" fill="#0a0a14"/>
+  <ellipse cx="65" cy="45" rx="8" ry="6" fill="#0a0a14"/>
+  <!-- Eye glints -->
+  <circle cx="33" cy="44" r="2" fill="#00d9ff" opacity="0.8"/>
+  <circle cx="63" cy="44" r="2" fill="#00d9ff" opacity="0.8"/>
+</svg>
