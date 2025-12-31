@@ -1,0 +1,516 @@
+/**
+ * TheaterStage Styles - Tech Noir "Watching AI Perform" Aesthetic
+ * Dark stage with spotlight on current player's clue + thinking
+ */
+
+.theater-stage {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  height: calc(100vh - 200px);
+  padding: 2rem;
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+}
+
+/* ============================================ */
+/* MAIN SPOTLIGHT AREA - Center Stage */
+/* ============================================ */
+
+.spotlight-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Waiting state */
+.waiting-state {
+  text-align: center;
+  color: #8b8b9a;
+}
+
+.waiting-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.waiting-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Player performance card */
+.player-performance {
+  width: 100%;
+  max-width: 900px;
+  padding: 3rem;
+  animation: performanceEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes performanceEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Performance header */
+.performance-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.player-badge {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.player-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3a86ff, #8338ec);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 0 30px rgba(58, 134, 255, 0.5);
+}
+
+.player-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.player-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.player-model {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #8b8b9a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.round-indicator {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #3a86ff;
+  font-weight: 600;
+}
+
+/* Role badge (for imposters) */
+.role-badge.imposter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 0, 110, 0.15), rgba(255, 0, 110, 0.05));
+  border: 2px solid #ff006e;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+}
+
+.badge-icon {
+  font-size: 2rem;
+}
+
+.badge-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  color: #ff006e;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+}
+
+.guess-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #ffbe0b;
+  font-style: italic;
+}
+
+/* Confidence display */
+.confidence-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.confidence-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.9rem;
+  color: #8b8b9a;
+  text-align: right;
+}
+
+.confidence-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px;
+  overflow: hidden;
+  position: relative;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff006e, #ffbe0b, #06ffa5);
+  border-radius: 100px;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 15px rgba(6, 255, 165, 0.6);
+}
+
+/* ============================================ */
+/* CLUE SPOTLIGHT - The Star of the Show */
+/* ============================================ */
+
+.clue-spotlight {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: radial-gradient(circle, rgba(58, 134, 255, 0.1) 0%, transparent 70%);
+  border-radius: 16px;
+}
+
+.clue-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #8b8b9a;
+  margin-bottom: 1rem;
+}
+
+.clue-word-massive {
+  font-family: 'Space Mono', monospace;
+  font-size: 5rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 40px rgba(58, 134, 255, 0.6),
+               0 4px 20px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.05em;
+  animation: clueReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(135deg, #ffffff, #3a86ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.player-performance.imposter .clue-word-massive {
+  background: linear-gradient(135deg, #ff006e, #ffbe0b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 0 40px rgba(255, 0, 110, 0.6);
+}
+
+@keyframes clueReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ============================================ */
+/* THINKING DISPLAY - The Reasoning */
+/* ============================================ */
+
+.thinking-display {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 2rem;
+}
+
+.thinking-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  color: #3a86ff;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.thinking-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #e0e0e8;
+  text-align: left;
+}
+
+.player-performance.imposter .thinking-label {
+  color: #ff006e;
+}
+
+.player-performance.imposter .thinking-display {
+  border-color: rgba(255, 0, 110, 0.2);
+  background: rgba(255, 0, 110, 0.05);
+}
+
+/* ============================================ */
+/* TIMELINE SIDEBAR - History & Context */
+/* ============================================ */
+
+.timeline-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-header h3 {
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  color: #ffffff;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.round-progress {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #3a86ff;
+  font-weight: 600;
+}
+
+.timeline-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.5rem;
+}
+
+/* Custom scrollbar */
+.timeline-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.timeline-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: rgba(58, 134, 255, 0.5);
+  border-radius: 10px;
+}
+
+/* Timeline items */
+.timeline-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid rgba(58, 134, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.timeline-item.current {
+  background: rgba(58, 134, 255, 0.1);
+  border-left-color: #3a86ff;
+  box-shadow: 0 0 20px rgba(58, 134, 255, 0.2);
+}
+
+.timeline-item.imposter {
+  border-left-color: rgba(255, 0, 110, 0.5);
+  background: rgba(255, 0, 110, 0.05);
+}
+
+.timeline-item.imposter.current {
+  border-left-color: #ff006e;
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
+}
+
+.timeline-marker {
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+.timeline-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.timeline-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-player {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.timeline-round {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #8b8b9a;
+}
+
+.timeline-clue {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: #e0e0e8;
+  font-weight: 600;
+}
+
+.timeline-guess {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #ffbe0b;
+  font-style: italic;
+}
+
+/* ============================================ */
+/* PLAYER GALLERY - Who's Who */
+/* ============================================ */
+
+.player-gallery {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gallery-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+  color: #8b8b9a;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.75rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.player-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.player-chip.active {
+  background: rgba(58, 134, 255, 0.15);
+  border-color: #3a86ff;
+  box-shadow: 0 0 15px rgba(58, 134, 255, 0.3);
+}
+
+.chip-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3a86ff, #8338ec);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chip-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #e0e0e8;
+}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+
+@media (max-width: 1200px) {
+  .theater-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .timeline-sidebar {
+    max-height: 300px;
+  }
+
+  .clue-word-massive {
+    font-size: 3.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .clue-word-massive {
+    font-size: 2.5rem;
+  }
+
+  .player-performance {
+    padding: 1.5rem;
+  }
+
+  .timeline-sidebar {
+    max-height: 250px;
+  }
+}
