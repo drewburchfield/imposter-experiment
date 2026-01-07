@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imposter Selection Probability - Clean Experiment</title>
+    <title>Imposter Selection Experiments</title>
 
     <!-- Chart.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 
     <style>
         :root {
-            --color-primary: #4ECDC4;
-            --color-secondary: #FF6B6B;
-            --color-accent: #FFE66D;
-            --bg-main: #F7F7F7;
-            --bg-card: #FFFFFF;
-            --text-primary: #2D3748;
-            --text-secondary: #718096;
-            --exp1-color: #667eea;
-            --exp2-color: #f093fb;
-            --exp3-color: #4facfe;
+            --color-primary: #0891b2;
+            --color-primary-dark: #0e7490;
+            --color-accent: #ff006e;
+            --color-success: #059669;
+            --color-warning: #d97706;
+            --bg-main: #fafafa;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
         }
 
         * {
@@ -42,27 +42,41 @@
             margin: 0 auto;
         }
 
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
         h1 {
-            text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             color: var(--text-primary);
-            font-size: 2.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
         }
 
         .subtitle {
-            text-align: center;
             color: var(--text-secondary);
-            margin-bottom: 30px;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+        }
+
+        .github-link {
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        .github-link:hover {
+            color: var(--text-primary);
         }
 
         /* Control Panel */
         .control-panel {
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 8px;
+            padding: 24px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
         }
 
         .control-row {
@@ -88,33 +102,35 @@
             background: var(--color-primary);
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
+            transition: background 0.2s ease;
+            font-weight: 500;
         }
 
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+            background: var(--color-primary-dark);
         }
 
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
         button.secondary {
-            background: var(--text-secondary);
+            background: #6b7280;
+        }
+
+        button.secondary:hover {
+            background: #4b5563;
         }
 
         button.run-all {
-            background: var(--color-secondary);
-            font-size: 1.1rem;
-            padding: 15px 30px;
+            background: var(--color-primary);
+            font-size: 1rem;
+            padding: 12px 24px;
         }
 
         input[type="number"] {
@@ -142,18 +158,9 @@
 
         .experiment-card {
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-top: 4px solid var(--exp1-color);
-        }
-
-        .experiment-card:nth-child(2) {
-            border-top-color: var(--exp2-color);
-        }
-
-        .experiment-card:nth-child(3) {
-            border-top-color: var(--exp3-color);
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
         }
 
         .experiment-header {
@@ -169,24 +176,16 @@
         }
 
         .experiment-number {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: var(--exp1-color);
+            background: var(--color-primary);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-
-        .experiment-card:nth-child(2) .experiment-number {
-            background: var(--exp2-color);
-        }
-
-        .experiment-card:nth-child(3) .experiment-number {
-            background: var(--exp3-color);
+            font-weight: 600;
+            font-size: 1rem;
         }
 
         .config-section {
@@ -223,37 +222,33 @@
         }
 
         .theory-display {
-            background: linear-gradient(135deg, var(--exp1-color), #8b9aed);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
+            background: #f3f4f6;
+            color: var(--text-primary);
+            padding: 16px;
+            border-radius: 6px;
             text-align: center;
             margin-bottom: 20px;
-        }
-
-        .experiment-card:nth-child(2) .theory-display {
-            background: linear-gradient(135deg, var(--exp2-color), #f3a4fc);
-        }
-
-        .experiment-card:nth-child(3) .theory-display {
-            background: linear-gradient(135deg, var(--exp3-color), #73c4ff);
+            border: 1px solid var(--border-color);
         }
 
         .theory-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .theory-value {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            margin-bottom: 5px;
+            color: var(--color-primary);
+            margin-bottom: 2px;
         }
 
         .theory-fraction {
-            font-size: 1rem;
-            opacity: 0.9;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
         .progress-section {
@@ -276,15 +271,15 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+            background: var(--color-primary);
             width: 0%;
             transition: width 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 0.85rem;
+            color: white;
+            font-weight: 500;
+            font-size: 0.8rem;
         }
 
         .progress-text {
@@ -330,26 +325,29 @@
         }
 
         .result-value.highlight {
-            color: var(--color-secondary);
-            font-size: 1.3rem;
+            color: var(--color-primary);
+            font-size: 1.2rem;
         }
 
         .difference {
             text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
             margin-top: 10px;
+            font-size: 0.85rem;
         }
 
         .difference.good {
-            background: #C6F6D5;
-            color: #22543D;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
 
         .difference.warning {
-            background: #FEF5E7;
-            color: #7D6608;
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
         }
 
         .chart-container {
@@ -365,9 +363,9 @@
 
         .comparison-section {
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
             margin-top: 30px;
         }
 
@@ -416,9 +414,9 @@
 
         .pattern-analysis {
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
             margin-top: 30px;
         }
 
@@ -439,26 +437,26 @@
         }
 
         .pattern-formula {
-            background: #2D3748;
-            color: #F7FAFC;
+            background: #1f2937;
+            color: #f9fafb;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 6px;
             margin: 20px 0;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Consolas', monospace;
         }
 
         .formula-step {
-            margin: 10px 0;
-            font-size: 1.1rem;
+            margin: 8px 0;
+            font-size: 1rem;
         }
 
         .formula-result {
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 2px solid #4ECDC4;
-            font-size: 1.3rem;
+            border-top: 1px solid #4b5563;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: var(--color-accent);
+            color: #34d399;
         }
 
         .pattern-comparison {
@@ -469,32 +467,34 @@
         }
 
         .pattern-card {
-            background: linear-gradient(135deg, var(--color-primary), #45b7aa);
+            background: var(--color-primary);
             color: white;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 6px;
             text-align: center;
         }
 
         .pattern-card:last-child {
-            background: linear-gradient(135deg, var(--color-secondary), #ee5a6f);
+            background: #6b7280;
         }
 
         .pattern-card-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 10px;
+            font-size: 0.75rem;
+            opacity: 0.85;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .pattern-card-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .pattern-card-subtext {
-            font-size: 1rem;
-            opacity: 0.9;
+            font-size: 0.9rem;
+            opacity: 0.85;
         }
 
         @keyframes fadeIn {
@@ -509,8 +509,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎲 Imposter Selection Experiments</h1>
-        <p class="subtitle">Clean experiments to test selection probability - No game clustering</p>
+        <header class="site-header">
+            <div>
+                <h1>Imposter Selection Experiments</h1>
+                <p class="subtitle">Monte Carlo simulation of selection probability</p>
+            </div>
+            <a href="https://github.com/drewburchfield/imposter-experiment" target="_blank" rel="noopener" class="github-link" title="View on GitHub">
+                <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+            </a>
+        </header>
 
         <!-- Control Panel -->
         <div class="control-panel">
@@ -594,7 +603,7 @@
                     <div class="difference" id="exp1-diff">-</div>
 
                     <div class="compound-contribution">
-                        <h4>📐 Compound Probability Contribution</h4>
+                        <h4>Compound Probability Contribution</h4>
                         <div class="compound-row">
                             <span class="compound-label">P(selected):</span>
                             <span class="compound-value" id="exp1-p-selected">-</span>
@@ -668,7 +677,7 @@
                     <div class="difference" id="exp2-diff">-</div>
 
                     <div class="compound-contribution">
-                        <h4>📐 Compound Probability Contribution</h4>
+                        <h4>Compound Probability Contribution</h4>
                         <div class="compound-row">
                             <span class="compound-label">P(selected):</span>
                             <span class="compound-value" id="exp2-p-selected">-</span>
@@ -742,7 +751,7 @@
                     <div class="difference" id="exp3-diff">-</div>
 
                     <div class="compound-contribution">
-                        <h4>📐 Compound Probability Contribution</h4>
+                        <h4>Compound Probability Contribution</h4>
                         <div class="compound-row">
                             <span class="compound-label">P(selected):</span>
                             <span class="compound-value" id="exp3-p-selected">-</span>
@@ -767,7 +776,7 @@
         <!-- Jen's Pattern Analysis -->
         <div class="pattern-analysis" id="pattern-analysis" style="display:none;">
             <div class="pattern-header">
-                <h2>🎯 Jen's Pattern Probability</h2>
+                <h2>Jen's Pattern Probability</h2>
                 <p>Based on experimental results: Selected in Exp 1, NOT in Exp 2, Selected in Exp 3</p>
             </div>
 
@@ -797,7 +806,7 @@
 
         <!-- Comparison Section -->
         <div class="comparison-section" id="comparison-section" style="display:none;">
-            <h2>📊 Side-by-Side Comparison</h2>
+            <h2>Side-by-Side Comparison</h2>
             <div class="comparison-chart">
                 <canvas id="comparison-chart"></canvas>
             </div>
@@ -806,7 +815,7 @@
         <!-- Full Jen Story Simulation -->
         <div class="pattern-analysis" id="jen-story-simulation" style="display:none;">
             <div class="pattern-header">
-                <h2>🎭 Ultimate Validation: Full Jen Story Simulation</h2>
+                <h2>Full Story Simulation</h2>
                 <p>Simulate complete 3-round games and count how many match Jen's exact pattern</p>
             </div>
 
@@ -1067,16 +1076,16 @@
                             {
                                 label: 'Actual %',
                                 data: percentages,
-                                borderColor: '#FF6B6B',
-                                backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                                borderWidth: 3,
+                                borderColor: '#0891b2',
+                                backgroundColor: 'rgba(8, 145, 178, 0.1)',
+                                borderWidth: 2,
                                 tension: 0.3,
                                 fill: true
                             },
                             {
                                 label: 'Theory %',
                                 data: theoryLine,
-                                borderColor: '#4ECDC4',
+                                borderColor: '#6b7280',
                                 borderWidth: 2,
                                 borderDash: [5, 5],
                                 pointRadius: 0
@@ -1306,16 +1315,16 @@
                             {
                                 label: 'Theory %',
                                 data: theoryData,
-                                backgroundColor: '#4ECDC4',
-                                borderColor: '#3EBDB5',
-                                borderWidth: 2
+                                backgroundColor: '#6b7280',
+                                borderColor: '#4b5563',
+                                borderWidth: 1
                             },
                             {
                                 label: 'Actual %',
                                 data: actualData,
-                                backgroundColor: '#FF6B6B',
-                                borderColor: '#EE5A5A',
-                                borderWidth: 2
+                                backgroundColor: '#0891b2',
+                                borderColor: '#0e7490',
+                                borderWidth: 1
                             }
                         ]
                     },
@@ -1392,7 +1401,7 @@
                 }
             });
 
-            console.log('🎲 Imposter Selection Experiments loaded!');
+            console.log('Imposter Selection Experiments loaded');
             console.log('Run experiments with different counts to see Law of Large Numbers');
         });
     </script>
