@@ -77,6 +77,44 @@ body {
   flex-shrink: 0;
 }
 
+/* Glowing CTA Button */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: var(--color-bg-void);
+  color: var(--color-neon-magenta);
+  border: 2px solid var(--color-neon-magenta);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(255, 0, 110, 0.3), 0 0 40px rgba(255, 0, 110, 0.1);
+  animation: pulse-glow-magenta 2s ease-in-out infinite;
+}
+
+.cta-button:hover {
+  background: var(--color-neon-magenta);
+  color: var(--color-bg-void);
+  box-shadow: 0 0 30px rgba(255, 0, 110, 0.5), 0 0 60px rgba(255, 0, 110, 0.3);
+  transform: translateY(-2px);
+}
+
+.cta-button svg {
+  flex-shrink: 0;
+}
+
+@keyframes pulse-glow-magenta {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 110, 0.3), 0 0 40px rgba(255, 0, 110, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 0, 110, 0.4), 0 0 50px rgba(255, 0, 110, 0.2);
+  }
+}
+
 .game-setup {
   max-width: 700px;
   width: 100%;

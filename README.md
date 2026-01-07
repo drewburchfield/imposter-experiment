@@ -39,6 +39,8 @@ The entire project was built using Claude Code, demonstrating what's possible wh
 
 Interactive probability simulator demonstrating the Law of Large Numbers through the "Jen scenario" - analyzing whether getting selected as imposter 2 out of 3 times is luck or random chance.
 
+Instead of solving probability with formulas, Monte Carlo runs the experiment thousands of times until patterns emerge - flip a coin 10 times and you might get 7 heads, flip it 10,000 times and you'll get almost exactly 50%.
+
 **Key Features:**
 - Monte Carlo simulation of player selection (thousands of trials)
 - Visual convergence to theoretical probability (1.61%)
