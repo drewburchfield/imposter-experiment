@@ -2,16 +2,6 @@
 
 An educational exercise for teaching probability, statistics, and AI behavior through social deduction games. What started as a breakfast table math problem became a full-featured learning tool combining statistical simulation with live AI gameplay.
 
-## Screenshots
-
-**Statistical Modeling Page** - Monte Carlo simulation demonstrating the Law of Large Numbers
-
-![Statistical Modeling Page](docs/screenshots/stats-simulation.png)
-
-**AI Game Simulation** - Watch AI agents play with visible reasoning
-
-![AI Game Simulation](docs/screenshots/ai-game-playing.png)
-
 ---
 
 ## The Story Behind This Project
@@ -60,6 +50,13 @@ Watch independent AI agents play the actual imposter game with real-time observa
 - Real-time event streaming via Server-Sent Events (SSE)
 - Observable "inner monologue" showing AI reasoning
 - CLI and web-based interfaces
+
+<table>
+  <tr>
+    <td width="50%"><strong>Statistical Modeling</strong><br><img src="docs/screenshots/stats-simulation.png" alt="Statistical Modeling Page"></td>
+    <td width="50%"><strong>AI Game Simulation</strong><br><img src="docs/screenshots/ai-game-playing.png" alt="AI Game Simulation"></td>
+  </tr>
+</table>
 
 ---
 
