@@ -378,7 +378,9 @@ Improvements welcome:
 
 ## License
 
-Free for educational use. Share with students, teachers, and learners.
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+You're free to use, modify, and share this project. If you distribute modified versions, they must also be open source under GPL-3.0. Attribution to Drew Burchfield & Leah Alisago is required.
 
 ---
 

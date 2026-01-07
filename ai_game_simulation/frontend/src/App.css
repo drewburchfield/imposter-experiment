@@ -446,3 +446,25 @@ body {
   border-color: rgba(255, 100, 100, 0.8);
   color: #ffbbbb;
 }
+
+/* Footer */
+.site-footer {
+  width: 100%;
+  max-width: 1400px;
+  margin-top: auto;
+  padding: var(--space-3) var(--space-3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.site-footer a {
+  color: var(--color-neon-cyan);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.site-footer a:hover {
+  color: var(--color-neon-magenta);
+}

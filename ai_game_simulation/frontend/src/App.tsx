@@ -424,6 +424,12 @@ function App() {
           )}
         </>
       )}
+
+      <footer className="site-footer">
+        Created by Drew Burchfield & Leah Alisago (my niece) |{' '}
+        <a href="https://github.com/drewburchfield/imposter-experiment" target="_blank" rel="noopener noreferrer">View Source</a> |{' '}
+        <a href="https://github.com/drewburchfield/imposter-experiment/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">GPL-3.0 License</a>
+      </footer>
     </div>
   );
 }
