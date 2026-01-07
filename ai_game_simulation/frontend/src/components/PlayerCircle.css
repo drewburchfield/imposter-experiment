@@ -1,0 +1,62 @@
+.player-circle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.player-avatar {
+  fill: #e2e8f0;
+  stroke: #cbd5e0;
+  stroke-width: 3;
+  transition: all 0.3s ease;
+}
+
+.player-avatar.speaking {
+  fill: #ffd700;
+  stroke: #ffed4e;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 10px #ffe66d);
+}
+
+.player-avatar.imposter {
+  fill: #ff6b6b;
+  stroke: #ee5a6f;
+}
+
+.player-avatar.non-imposter {
+  fill: #4ecdc4;
+  stroke: #45b7aa;
+}
+
+.speaker-glow {
+  fill: none;
+  stroke: #ffe66d;
+  stroke-width: 2;
+  stroke-dasharray: 5;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.player-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: #2d3748;
+}
+
+.player-model {
+  font-size: 11px;
+  fill: #718096;
+}

@@ -1,0 +1,116 @@
+.inner-monologue {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.monologue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.monologue-header h3 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.filter-indicator {
+  font-size: 0.85rem;
+  color: #718096;
+  background: #f7fafc;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.monologue-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #a0aec0;
+}
+
+.thought-card {
+  background: #f7fafc;
+  border-left: 4px solid #4ecdc4;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.thought-card.vote {
+  border-left-color: #9f7aea;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.thought-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.player-id {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.confidence {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.confidence-0, .confidence-1 {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.confidence-2 {
+  background: #fef5e7;
+  color: #7d6608;
+}
+
+.confidence-3, .confidence-4 {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.thought-content {
+  color: #4a5568;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.thought-timestamp {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #a0aec0;
+  text-align: right;
+}

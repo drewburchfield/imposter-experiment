@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  imposter:
+    build: .
+    container_name: imposter-experiment
+    restart: unless-stopped
+    ports:
+      - "8765:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./README.md:/usr/share/nginx/html/README.md:ro
