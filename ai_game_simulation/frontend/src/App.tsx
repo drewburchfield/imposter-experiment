@@ -4,6 +4,22 @@
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+
+// Analytics type declarations (loaded via script tags in index.html)
+declare global {
+  interface Window {
+    posthog?: {
+      capture: (event: string, properties?: Record<string, unknown>) => void;
+    };
+    gtag?: (command: string, action: string, params?: Record<string, unknown>) => void;
+  }
+}
+
+// Analytics helper
+const track = (event: string, properties?: Record<string, unknown>) => {
+  window.posthog?.capture(event, properties);
+  window.gtag?.('event', event, properties);
+};
 import { GameControls } from './components/GameControls';
 import { TheaterStage } from './components/TheaterStage';
 import { ImposterReveal } from './components/ImposterReveal';
@@ -77,11 +93,13 @@ function App() {
     if (selectedEventIndex !== null) {
       goToLive(); // This clears clue selection
     }
+    track('vote_inspected', { vote_index: index });
   }, [selectedEventIndex, goToLive]);
 
   const selectClue = useCallback((index: number) => {
     setSelectedVoteIndex(null); // Clear vote selection
     selectEvent(index);
+    track('clue_inspected', { clue_index: index });
   }, [selectEvent]);
 
   // Clear vote selection when going to live
@@ -101,6 +119,30 @@ function App() {
       setGameStarted(true);
     }
   }, [events, gameStarted]);
+
+  // Track game completion (only once per game)
+  const [gameCompletionTracked, setGameCompletionTracked] = useState(false);
+  useEffect(() => {
+    const gameCompleteEvent = events.find(e => e.type === 'game_complete');
+    if (gameCompleteEvent && !gameCompletionTracked) {
+      const result = (gameCompleteEvent as { result: { detection_accuracy: number; actual_imposters: string[]; eliminated_players: string[] } }).result;
+      track('game_completed', {
+        detection_accuracy: result.detection_accuracy,
+        imposters_caught: result.eliminated_players.filter(p => result.actual_imposters.includes(p)).length,
+        total_imposters: result.actual_imposters.length,
+        num_players: config.num_players,
+        num_rounds: config.num_rounds
+      });
+      setGameCompletionTracked(true);
+    }
+  }, [events, gameCompletionTracked, config.num_players, config.num_rounds]);
+
+  // Reset completion tracking when starting new game
+  useEffect(() => {
+    if (!gameId) {
+      setGameCompletionTracked(false);
+    }
+  }, [gameId]);
 
   const gameState: {
     players: Player[];
@@ -241,6 +283,16 @@ function App() {
 
       const data = await response.json();
       setGameId(data.game_id);
+
+      // Track game started
+      track('game_started', {
+        word: config.word,
+        category: config.category,
+        num_players: config.num_players,
+        num_imposters: config.num_imposters,
+        num_rounds: config.num_rounds,
+        voting_rounds: config.voting_rounds
+      });
     } catch (error) {
       console.error('Failed to create game:', error);
       alert('Failed to create game. Is the backend running?');
@@ -252,6 +304,7 @@ function App() {
     setGameId(null);
     setGameStarted(false);
     setShowResultsModal(false);
+    track('new_game_clicked');
   }, []);
 
   return (
@@ -366,10 +419,10 @@ function App() {
             speed={speed}
             currentRound={gameState.currentRound}
             totalRounds={config.num_rounds}
-            onTogglePlay={togglePlay}
-            onSpeedChange={setSpeed}
+            onTogglePlay={() => { togglePlay(); track('playback_toggled', { action: isPlaying ? 'pause' : 'play' }); }}
+            onSpeedChange={(newSpeed) => { setSpeed(newSpeed); track('speed_changed', { speed: newSpeed }); }}
             gameComplete={!!gameState.result}
-            onShowResults={() => setShowResultsModal(true)}
+            onShowResults={() => { setShowResultsModal(true); track('results_modal_opened'); }}
             onNewGame={startNewGame}
           />
 
