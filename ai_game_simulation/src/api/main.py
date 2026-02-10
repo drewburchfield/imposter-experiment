@@ -345,6 +345,14 @@ if frontend_dist.exists():
         index_file = frontend_dist / "index.html"
         return HTMLResponse(content=index_file.read_text())
 
+    @app.get("/simulator")
+    async def serve_simulator():
+        """Serve Monte Carlo statistical simulator"""
+        simulator_file = frontend_dist / "simulator.html"
+        if simulator_file.exists():
+            return HTMLResponse(content=simulator_file.read_text())
+        raise HTTPException(status_code=404, detail="Simulator not found")
+
     @app.get("/{full_path:path}")
     async def serve_spa_fallback(full_path: str):
         """Fallback for client-side routing"""
