@@ -1427,7 +1427,7 @@
 
                 // Calculate results
                 const simPercent = (matchingGames / totalGames) * 100;
-                const simOdds = totalGames / matchingGames;
+                const simOdds = matchingGames > 0 ? totalGames / matchingGames : Infinity;
 
                 // Display results
                 document.getElementById('jen-story-progress').style.display = 'none';

@@ -471,7 +471,8 @@ if frontend_dist.exists():
             file_path = (frontend_dist / full_path).resolve()
 
             # Ensure resolved path is still within frontend_dist (security check)
-            if not str(file_path).startswith(str(frontend_dist.resolve())):
+            # Add trailing separator to prevent sibling directory bypass (e.g., dist_backup)
+            if not str(file_path).startswith(str(frontend_dist.resolve()) + "/"):
                 logger.warning(f"Path traversal attempt detected: {full_path}")
                 raise HTTPException(status_code=403, detail="Access denied")
 
