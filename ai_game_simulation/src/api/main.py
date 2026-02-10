@@ -9,7 +9,7 @@ import os
 import logging
 import sqlite3
 from typing import Dict, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -104,17 +104,17 @@ async def create_game(request: CreateGameRequest):
 
     Returns game_id and SSE stream URL for real-time updates.
     """
+    # Validate API key exists (before try block to avoid HTTPException swallowing)
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        logger.error("OPENROUTER_API_KEY not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured. Please contact support."
+        )
+
     try:
         game_id = str(uuid.uuid4())
-
-        # Validate API key exists
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            logger.error("OPENROUTER_API_KEY not configured")
-            raise HTTPException(
-                status_code=503,
-                detail="AI service is not configured. Please contact support."
-            )
 
         # Create config (might raise ValueError from Pydantic validation)
         # Note: If model_distribution not provided, GameConfig uses its own tested defaults
@@ -320,7 +320,7 @@ async def get_game_history(game_id: str):
 
 
 @app.get("/api/games/list")
-async def list_games(limit: int = 10):
+async def list_games(limit: int = Query(default=10, ge=1, le=100)):
     """List recent games"""
     conn = None
     try:
@@ -354,6 +354,8 @@ async def list_games(limit: int = 10):
 
         return {"games": games}
 
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is (don't convert to 500)
     except sqlite3.OperationalError as e:
         logger.error(f"Database connection failed: {e}")
         raise HTTPException(

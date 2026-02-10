@@ -1023,8 +1023,8 @@
             setCount(count) {
                 document.getElementById('custom-count').value = count;
                 // Track preset button click
-                posthog.capture('preset_selected', { sample_size: count });
-                gtag('event', 'preset_selected', { sample_size: count });
+                if (typeof posthog !== 'undefined') posthog.capture('preset_selected', { sample_size: count });
+                if (typeof gtag !== 'undefined') gtag('event', 'preset_selected', { sample_size: count });
             },
 
             getCount() {
@@ -1301,16 +1301,18 @@
 
                 // Track simulation run
                 const configs = [1, 2, 3].map(i => this.getExperimentConfig(i));
-                posthog.capture('simulation_run', {
-                    sample_size: count,
-                    exp1_players: configs[0].players,
-                    exp1_imposters: configs[0].imposters,
-                    exp2_players: configs[1].players,
-                    exp2_imposters: configs[1].imposters,
-                    exp3_players: configs[2].players,
-                    exp3_imposters: configs[2].imposters
-                });
-                gtag('event', 'simulation_run', { sample_size: count });
+                if (typeof posthog !== 'undefined') {
+                    posthog.capture('simulation_run', {
+                        sample_size: count,
+                        exp1_players: configs[0].players,
+                        exp1_imposters: configs[0].imposters,
+                        exp2_players: configs[1].players,
+                        exp2_imposters: configs[1].imposters,
+                        exp3_players: configs[2].players,
+                        exp3_imposters: configs[2].imposters
+                    });
+                }
+                if (typeof gtag !== 'undefined') gtag('event', 'simulation_run', { sample_size: count });
 
                 const results = [];
                 for (let i = 1; i <= 3; i++) {
@@ -1392,8 +1394,8 @@
                 const config3 = this.getExperimentConfig(3);
 
                 // Track full story simulation
-                posthog.capture('full_story_simulation', { num_games: totalGames });
-                gtag('event', 'full_story_simulation', { num_games: totalGames });
+                if (typeof posthog !== 'undefined') posthog.capture('full_story_simulation', { num_games: totalGames });
+                if (typeof gtag !== 'undefined') gtag('event', 'full_story_simulation', { num_games: totalGames });
 
                 // Show progress
                 document.getElementById('jen-story-progress').style.display = 'block';
@@ -1532,8 +1534,8 @@
                 document.getElementById('exp3-imposters').value = 2;
                 this.updateTheoryDisplays();
                 // Track scenario reset
-                posthog.capture('scenario_reset', { scenario: 'jen_default' });
-                gtag('event', 'scenario_reset', { scenario: 'jen_default' });
+                if (typeof posthog !== 'undefined') posthog.capture('scenario_reset', { scenario: 'jen_default' });
+                if (typeof gtag !== 'undefined') gtag('event', 'scenario_reset', { scenario: 'jen_default' });
             },
 
             // Clear all results
@@ -1553,8 +1555,8 @@
                     this.comparisonChart.destroy();
                 }
                 // Track results cleared
-                posthog.capture('results_cleared');
-                gtag('event', 'results_cleared');
+                if (typeof posthog !== 'undefined') posthog.capture('results_cleared');
+                if (typeof gtag !== 'undefined') gtag('event', 'results_cleared');
             },
 
             // Utility
