@@ -3,8 +3,8 @@
 An educational exercise for teaching probability, statistics, and AI behavior through social deduction games. What started as a breakfast table math problem became a full-featured learning tool combining statistical simulation with live AI gameplay.
 
 **Try it live:**
-[Statistical Modeling](https://imposter.drewburchfield.com/) |
-[AI Game Simulation](https://imposter-ai-game.drewburchfield.com/)
+[🎭 AI Game Simulation](https://imposter.drewburchfield.com/) |
+[📊 Statistical Modeling](https://imposter.drewburchfield.com/simulator)
 
 ---
 

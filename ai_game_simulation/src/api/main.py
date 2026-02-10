@@ -9,8 +9,8 @@ import os
 import logging
 import sqlite3
 from typing import Dict, Optional
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -104,43 +104,70 @@ async def create_game(request: CreateGameRequest):
 
     Returns game_id and SSE stream URL for real-time updates.
     """
-    game_id = str(uuid.uuid4())
+    # Validate API key exists (before try block to avoid HTTPException swallowing)
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        logger.error("OPENROUTER_API_KEY not configured")
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured. Please contact support."
+        )
 
-    # Create config
-    # Note: If model_distribution not provided, GameConfig uses its own tested defaults
-    # Note: If num_voting_rounds not provided, GameConfig defaults to min(2, num_imposters)
-    config = GameConfig(
-        word=request.word,
-        category=request.category,
-        num_players=request.num_players,
-        num_imposters=request.num_imposters,
-        num_rounds=request.num_rounds,
-        num_voting_rounds=request.num_voting_rounds,
-        model_strategy=request.model_strategy,
-        model_distribution=request.model_distribution,  # Let GameConfig handle None case
-        enable_discussion=request.enable_discussion
-    )
+    try:
+        game_id = str(uuid.uuid4())
 
-    # Create OpenRouter client
-    openrouter = OpenRouterClient(
-        api_key=os.getenv("OPENROUTER_API_KEY")
-    )
+        # Create config (might raise ValueError from Pydantic validation)
+        # Note: If model_distribution not provided, GameConfig uses its own tested defaults
+        # Note: If num_voting_rounds not provided, GameConfig defaults to min(2, num_imposters)
+        config = GameConfig(
+            word=request.word,
+            category=request.category,
+            num_players=request.num_players,
+            num_imposters=request.num_imposters,
+            num_rounds=request.num_rounds,
+            num_voting_rounds=request.num_voting_rounds,
+            model_strategy=request.model_strategy,
+            model_distribution=request.model_distribution,  # Let GameConfig handle None case
+            enable_discussion=request.enable_discussion
+        )
 
-    # Create game engine
-    engine = GameEngine(config, openrouter)
+        # Create OpenRouter client
+        openrouter = OpenRouterClient(api_key=api_key)
 
-    # Create history tracker
-    history = GameHistory(game_id)
+        # Create game engine
+        engine = GameEngine(config, openrouter)
 
-    # Store in sessions
-    game_sessions[game_id] = engine
-    game_histories[game_id] = history
+        # Create history tracker
+        history = GameHistory(game_id)
 
-    return GameSession(
-        game_id=game_id,
-        status="created",
-        stream_url=f"/api/game/{game_id}/stream"
-    )
+        # Store in sessions
+        game_sessions[game_id] = engine
+        game_histories[game_id] = history
+
+        return GameSession(
+            game_id=game_id,
+            status="created",
+            stream_url=f"/api/game/{game_id}/stream"
+        )
+
+    except ValueError as e:
+        logger.error(f"Invalid game configuration: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid game configuration: {str(e)}"
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error creating game history: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Game history database is unavailable. Please try again later."
+        )
+    except Exception as e:
+        logger.exception("Unexpected error creating game")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create game. Please try again."
+        )
 
 
 @app.get("/api/game/{game_id}/stream")
@@ -293,33 +320,63 @@ async def get_game_history(game_id: str):
 
 
 @app.get("/api/games/list")
-async def list_games(limit: int = 10):
+async def list_games(limit: int = Query(default=10, ge=1, le=100)):
     """List recent games"""
-    conn = sqlite3.connect("./data/games.db")
-    cursor = conn.cursor()
+    conn = None
+    try:
+        conn = sqlite3.connect("./data/games.db")
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT id, word, category, num_players, num_imposters, created_at, result
-        FROM games
-        ORDER BY created_at DESC
-        LIMIT ?
-    """, (limit,))
+        cursor.execute("""
+            SELECT id, word, category, num_players, num_imposters, created_at, result
+            FROM games
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (limit,))
 
-    games = []
-    for row in cursor.fetchall():
-        games.append({
-            "id": row[0],
-            "word": row[1],
-            "category": row[2],
-            "num_players": row[3],
-            "num_imposters": row[4],
-            "created_at": row[5],
-            "result": json.loads(row[6]) if row[6] else None
-        })
+        games = []
+        for row in cursor.fetchall():
+            try:
+                result_data = json.loads(row[6]) if row[6] else None
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse game result JSON for game {row[0]}: {e}")
+                result_data = None  # Continue with null result rather than failing entire request
 
-    conn.close()
+            games.append({
+                "id": row[0],
+                "word": row[1],
+                "category": row[2],
+                "num_players": row[3],
+                "num_imposters": row[4],
+                "created_at": row[5],
+                "result": result_data
+            })
 
-    return {"games": games}
+        return {"games": games}
+
+    except HTTPException:
+        raise  # Re-raise HTTPException as-is (don't convert to 500)
+    except sqlite3.OperationalError as e:
+        logger.error(f"Database connection failed: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Game history database is temporarily unavailable. Please try again later."
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database query failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to retrieve game history. Please contact support if this persists."
+        )
+    except Exception as e:
+        logger.exception("Unexpected error listing games")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred while retrieving game history."
+        )
+    finally:
+        if conn:
+            conn.close()
 
 
 # Import for SSE (need these in scope)
@@ -343,7 +400,64 @@ if frontend_dist.exists():
     async def serve_spa():
         """Serve the React SPA"""
         index_file = frontend_dist / "index.html"
-        return HTMLResponse(content=index_file.read_text())
+        try:
+            content = index_file.read_text()
+            return HTMLResponse(content=content)
+        except FileNotFoundError:
+            logger.error(f"Frontend index.html not found at {index_file}")
+            raise HTTPException(
+                status_code=503,
+                detail="Application frontend is not available. Please contact support."
+            )
+        except PermissionError:
+            logger.error(f"Permission denied reading {index_file}")
+            raise HTTPException(
+                status_code=503,
+                detail="Application frontend cannot be loaded due to a server configuration issue."
+            )
+        except UnicodeDecodeError as e:
+            logger.error(f"File encoding error reading {index_file}: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail="Application frontend files are corrupted. Please contact support."
+            )
+        except Exception as e:
+            logger.exception(f"Unexpected error serving index.html")
+            raise HTTPException(
+                status_code=503,
+                detail="Application frontend cannot be loaded. Please try again later."
+            )
+
+    @app.get("/simulator")
+    async def serve_simulator():
+        """Serve statistical probability simulator (demonstrates Law of Large Numbers)"""
+        simulator_file = frontend_dist / "simulator.html"
+
+        if not simulator_file.exists():
+            logger.warning(f"Simulator file not found at {simulator_file}")
+            raise HTTPException(status_code=404, detail="Simulator not found")
+
+        try:
+            content = simulator_file.read_text()
+            return HTMLResponse(content=content)
+        except PermissionError:
+            logger.error(f"Permission denied reading {simulator_file}")
+            raise HTTPException(
+                status_code=503,
+                detail="Simulator page cannot be loaded due to a server configuration issue."
+            )
+        except UnicodeDecodeError as e:
+            logger.error(f"File encoding error reading {simulator_file}: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail="Simulator page files are corrupted. Please contact support."
+            )
+        except Exception as e:
+            logger.exception(f"Unexpected error serving simulator.html")
+            raise HTTPException(
+                status_code=503,
+                detail="Simulator page cannot be loaded. Please try again later."
+            )
 
     @app.get("/{full_path:path}")
     async def serve_spa_fallback(full_path: str):
@@ -352,14 +466,54 @@ if frontend_dist.exists():
         if full_path.startswith("api/") or full_path == "health":
             raise HTTPException(status_code=404)
 
-        # Try to serve static file first
-        file_path = frontend_dist / full_path
-        if file_path.exists() and file_path.is_file():
-            return HTMLResponse(content=file_path.read_text())
+        # Validate path to prevent directory traversal attacks
+        try:
+            file_path = (frontend_dist / full_path).resolve()
+
+            # Ensure resolved path is still within frontend_dist (security check)
+            # Add trailing separator to prevent sibling directory bypass (e.g., dist_backup)
+            if not str(file_path).startswith(str(frontend_dist.resolve()) + "/"):
+                logger.warning(f"Path traversal attempt detected: {full_path}")
+                raise HTTPException(status_code=403, detail="Access denied")
+
+            # Try to serve static file first (use FileResponse for all file types)
+            if file_path.exists() and file_path.is_file():
+                try:
+                    return FileResponse(file_path)
+                except PermissionError as e:
+                    logger.error(f"Permission denied serving static file {full_path}: {e}")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Requested file cannot be accessed due to server permissions."
+                    )
+                except OSError as e:
+                    logger.error(f"File system error serving {full_path}: {e}")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="File system error occurred. Please try again later."
+                    )
+                except Exception as e:
+                    logger.exception(f"Unexpected error serving static file {full_path}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Failed to serve requested file."
+                    )
+
+        except (ValueError, OSError) as e:
+            logger.warning(f"Invalid path requested: {full_path} - {e}")
+            # Fall through to index.html fallback
 
         # Fallback to index.html for client-side routing
         index_file = frontend_dist / "index.html"
-        return HTMLResponse(content=index_file.read_text())
+        try:
+            content = index_file.read_text()
+            return HTMLResponse(content=content)
+        except Exception as e:
+            logger.exception("Failed to read fallback index.html")
+            raise HTTPException(
+                status_code=503,
+                detail="Application cannot be loaded. Please try again later."
+            )
 else:
     # Development mode - no frontend build
     @app.get("/")

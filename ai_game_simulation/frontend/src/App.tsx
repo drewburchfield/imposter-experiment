@@ -315,7 +315,7 @@ function App() {
           <p>Watch AI agents play social deduction with visible reasoning</p>
         </div>
         <div className="header-links">
-          <a href="https://imposter.drewburchfield.com/" className="cta-button" title="Monte Carlo probability simulator">
+          <a href="/simulator" className="cta-button" title="Monte Carlo probability simulator">
             <svg height="22" width="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 3v18h18"/>
               <path d="M7 16l4-8 4 4 6-10"/>
