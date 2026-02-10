@@ -10,7 +10,7 @@ import logging
 import sqlite3
 from typing import Dict, Optional
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -104,43 +104,70 @@ async def create_game(request: CreateGameRequest):
 
     Returns game_id and SSE stream URL for real-time updates.
     """
-    game_id = str(uuid.uuid4())
+    try:
+        game_id = str(uuid.uuid4())
 
-    # Create config
-    # Note: If model_distribution not provided, GameConfig uses its own tested defaults
-    # Note: If num_voting_rounds not provided, GameConfig defaults to min(2, num_imposters)
-    config = GameConfig(
-        word=request.word,
-        category=request.category,
-        num_players=request.num_players,
-        num_imposters=request.num_imposters,
-        num_rounds=request.num_rounds,
-        num_voting_rounds=request.num_voting_rounds,
-        model_strategy=request.model_strategy,
-        model_distribution=request.model_distribution,  # Let GameConfig handle None case
-        enable_discussion=request.enable_discussion
-    )
+        # Validate API key exists
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            logger.error("OPENROUTER_API_KEY not configured")
+            raise HTTPException(
+                status_code=503,
+                detail="AI service is not configured. Please contact support."
+            )
 
-    # Create OpenRouter client
-    openrouter = OpenRouterClient(
-        api_key=os.getenv("OPENROUTER_API_KEY")
-    )
+        # Create config (might raise ValueError from Pydantic validation)
+        # Note: If model_distribution not provided, GameConfig uses its own tested defaults
+        # Note: If num_voting_rounds not provided, GameConfig defaults to min(2, num_imposters)
+        config = GameConfig(
+            word=request.word,
+            category=request.category,
+            num_players=request.num_players,
+            num_imposters=request.num_imposters,
+            num_rounds=request.num_rounds,
+            num_voting_rounds=request.num_voting_rounds,
+            model_strategy=request.model_strategy,
+            model_distribution=request.model_distribution,  # Let GameConfig handle None case
+            enable_discussion=request.enable_discussion
+        )
 
-    # Create game engine
-    engine = GameEngine(config, openrouter)
+        # Create OpenRouter client
+        openrouter = OpenRouterClient(api_key=api_key)
 
-    # Create history tracker
-    history = GameHistory(game_id)
+        # Create game engine
+        engine = GameEngine(config, openrouter)
 
-    # Store in sessions
-    game_sessions[game_id] = engine
-    game_histories[game_id] = history
+        # Create history tracker
+        history = GameHistory(game_id)
 
-    return GameSession(
-        game_id=game_id,
-        status="created",
-        stream_url=f"/api/game/{game_id}/stream"
-    )
+        # Store in sessions
+        game_sessions[game_id] = engine
+        game_histories[game_id] = history
+
+        return GameSession(
+            game_id=game_id,
+            status="created",
+            stream_url=f"/api/game/{game_id}/stream"
+        )
+
+    except ValueError as e:
+        logger.error(f"Invalid game configuration: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid game configuration: {str(e)}"
+        )
+    except sqlite3.Error as e:
+        logger.error(f"Database error creating game history: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Game history database is unavailable. Please try again later."
+        )
+    except Exception as e:
+        logger.exception("Unexpected error creating game")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create game. Please try again."
+        )
 
 
 @app.get("/api/game/{game_id}/stream")
@@ -446,14 +473,28 @@ if frontend_dist.exists():
                 logger.warning(f"Path traversal attempt detected: {full_path}")
                 raise HTTPException(status_code=403, detail="Access denied")
 
-            # Try to serve static file first
+            # Try to serve static file first (use FileResponse for all file types)
             if file_path.exists() and file_path.is_file():
                 try:
-                    content = file_path.read_text()
-                    return HTMLResponse(content=content)
+                    return FileResponse(file_path)
+                except PermissionError as e:
+                    logger.error(f"Permission denied serving static file {full_path}: {e}")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Requested file cannot be accessed due to server permissions."
+                    )
+                except OSError as e:
+                    logger.error(f"File system error serving {full_path}: {e}")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="File system error occurred. Please try again later."
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to read static file {full_path}: {e}")
-                    # Fall through to index.html fallback
+                    logger.exception(f"Unexpected error serving static file {full_path}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Failed to serve requested file."
+                    )
 
         except (ValueError, OSError) as e:
             logger.warning(f"Invalid path requested: {full_path} - {e}")
