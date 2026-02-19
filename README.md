@@ -8,6 +8,16 @@ An educational exercise for teaching probability, statistics, and AI behavior th
 
 ---
 
+## 🎤 Featured
+
+> **[Presented at AI Tinkerers Nashville](https://nashville.aitinkerers.org/talks/rsvp_5m6nlurQ1fo)** (Jan 29, 2026) | ⭐ 4.5/5 audience rating
+>
+> Featured in [AI Tinkerers Community Spotlights #15](https://post-training.aitinkerers.org/p/community-spotlights-issue-15), distributed to the national builder community across 20+ cities.
+>
+> *"Loved the human side of this as well as the implementation. It sparked so many ideas."*
+
+---
+
 ## The Story Behind This Project
 
 I was sitting at the breakfast table the morning after an exciting evening of family games, one of which was Imposter (also known as The Chameleon, Spyfall, or Insider). My niece Leah was scribbling calculations on paper, and I asked what she was doing.
